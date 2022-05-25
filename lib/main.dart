@@ -4,6 +4,7 @@ import 'package:cfg_flutter/util.dart';
 import 'package:cfg_flutter/widgets/about.dart';
 import 'package:cfg_flutter/widgets/cfg_drawer_header.dart';
 import 'package:cfg_flutter/widgets/fuel_page.dart';
+import 'package:cfg_flutter/widgets/station_page.dart';
 import 'package:cfg_flutter/widgets/syncing_progress_indicator.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -27,6 +28,7 @@ class CyprusFuelGuideApp extends StatelessWidget {
 
   static const String keyLastSynced = 'KEY_LAST_SYNCED';
   static const String keyLastUpdateTimestamp = 'KEY_LAST_UPDATE_TIMESTAMP';
+  static const String keyNumOfStations = 'KEY_NUM_OF_STATIONS';
   static const String keyLastRawJson = 'KEY_LAST_RAW_JSON';
 
   // This widget is the root of your application.
@@ -40,7 +42,8 @@ class CyprusFuelGuideApp extends StatelessWidget {
         initialRoute: '/',
         routes: {
           '/': (context) => const CyprusFuelGuideAppPage(title: 'Cyprus Fuel Guide'),
-          '/about': (context) => const AboutPage(title: 'About', syncResponse: null),
+          '/station': (context) => const StationPage(title: 'Station'),
+          '/about': (context) => const AboutPage(title: 'About'),
         }
     );
   }
@@ -108,6 +111,7 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
         int lastSynced = DateTime.now().millisecondsSinceEpoch;
         _prefs.then((SharedPreferences sharedPreferences) => sharedPreferences.setInt(CyprusFuelGuideApp.keyLastSynced, lastSynced));
         _prefs.then((SharedPreferences sharedPreferences) => sharedPreferences.setInt(CyprusFuelGuideApp.keyLastUpdateTimestamp, syncResponse.lastUpdated));
+        _prefs.then((SharedPreferences sharedPreferences) => sharedPreferences.setInt(CyprusFuelGuideApp.keyNumOfStations, syncResponse.stations.length));
         _prefs.then((SharedPreferences sharedPreferences) => sharedPreferences.setString(CyprusFuelGuideApp.keyLastRawJson, rawJson));
 
         setState(() {
@@ -199,6 +203,7 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
                   onTap: () {
                     // todo
                     _scaffoldKey.currentState!.closeDrawer();
+                    Navigator.pushNamed(context, '/station', arguments: _syncResponse!.stations[0].code);
                   },
                 ),
                 ListTile(

@@ -7,15 +7,13 @@ import 'dart:io' show Platform;
 import 'package:share_plus/share_plus.dart';
 
 import '../main.dart';
-import '../model/sync_response.dart';
 import '../util.dart';
 
 class AboutPage extends StatefulWidget {
 
   final String title;
-  final SyncResponse? syncResponse;
 
-  const AboutPage({Key? key, required this.title, required this.syncResponse}) : super(key: key);
+  const AboutPage({Key? key, required this.title}) : super(key: key);
 
   @override
   AboutState createState() => AboutState();
@@ -24,6 +22,7 @@ class AboutPage extends StatefulWidget {
 class AboutState extends State<AboutPage> {
 
   String? _version;
+  late String databaseTitle = '';
   late String databaseSubtitle = '';
 
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
@@ -36,49 +35,47 @@ class AboutState extends State<AboutPage> {
     _prefs.then((SharedPreferences prefs) {
       final int lastUpdateTimestamp = prefs.getInt(CyprusFuelGuideApp.keyLastUpdateTimestamp) ?? 0;
       final int lastSynced = prefs.getInt(CyprusFuelGuideApp.keyLastSynced) ?? 0;
+      final int numOfStations = prefs.getInt(CyprusFuelGuideApp.keyNumOfStations) ?? 0;
       final int now = DateTime.now().millisecondsSinceEpoch;
+      databaseTitle = 'Database with $numOfStations stations';
       databaseSubtitle = 'Prices last modified ${Util.timeInWords(now - lastUpdateTimestamp)} ago (server last contacted ${Util.timeInWords(now - lastSynced)} ago)';
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    String databaseTitle = widget.syncResponse == null ? 'Database not initialized' : 'Database with ${widget.syncResponse!.stations.length} stations';
     return MaterialApp(
         theme: ThemeData(
           primarySwatch: Colors.amber,
         ),
-        home: DefaultTabController(
-            length: 3,
-            child: Scaffold(
-                appBar: AppBar(
-                  title: Text(widget.title),
-                  leading: IconButton(icon: const Icon(Icons.arrow_back),
-                      onPressed: () => Navigator.of(context).pop(false)),
+        home: Scaffold(
+            appBar: AppBar(
+              title: Text(widget.title),
+              leading: IconButton(icon: const Icon(Icons.arrow_back),
+                  onPressed: () => Navigator.of(context).pop(false)),
+            ),
+            body: Container(
+                decoration: BoxDecoration(
+                  color: Colors.amber[50],
+                  image: const DecorationImage(
+                      image: AssetImage("images/skyline_outline.png"),
+                      fit: BoxFit.none,
+                      repeat: ImageRepeat.noRepeat,
+                      alignment: Alignment.bottomCenter
+                  ),
                 ),
-                body: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.amber[50],
-                      image: const DecorationImage(
-                          image: AssetImage("images/skyline_outline.png"),
-                          fit: BoxFit.none,
-                          repeat: ImageRepeat.repeatX,
-                          alignment: Alignment.bottomCenter
-                      ),
-                    ),
-                    child: ListView(
-                      children: [
-                        _getCard(Image.asset('icons/launcher.png', width: 32, height: 32), 'Cyprus Fuel Guide', 'http://cyprusfuelguide.com', _launchURI, 'http://cyprusfuelguide.com'),
-                        _getCard(const Icon(Icons.data_array, color: Colors.brown, size: 32), databaseTitle, databaseSubtitle, _launchURI, 'https://cyprusfuelguide.com'),
-                        _getCard(const Icon(Icons.code, color: Colors.brown, size: 32), 'Developed with ❤ by', 'http://aspectsense.com', _launchURI, 'http://aspectsense.com'),
-                        _getCard(const Icon(Icons.build, color: Colors.brown, size: 32), 'Open Source Software', 'Version $_version', _launchURI, 'https://cyprusfuelguide.com'),
-                        _getCard(const Icon(Icons.favorite, color: Colors.brown, size: 32), 'Loved the app?', 'Click to rate', _launchURI, _getMarketplaceLink()),
-                        Visibility(
-                          visible: !kIsWeb,
-                          child: _getCard(const Icon(Icons.share, color: Colors.brown, size: 32), 'Tell the world!', 'Share with your friends', _share, 'Get Cyprus Fuel Guide for Android and iOS for free at http://cyprusfuelguide.com'),
-                        )
-                      ],
+                child: ListView(
+                  children: [
+                    _getCard(Image.asset('icons/launcher.png', width: 32, height: 32), 'Cyprus Fuel Guide', 'http://cyprusfuelguide.com', _launchURI, 'http://cyprusfuelguide.com'),
+                    _getCard(const Icon(Icons.data_array, color: Colors.brown, size: 32), databaseTitle, databaseSubtitle, _launchURI, 'https://cyprusfuelguide.com'),
+                    _getCard(const Icon(Icons.code, color: Colors.brown, size: 32), 'Developed with ❤ by', 'http://aspectsense.com', _launchURI, 'http://aspectsense.com'),
+                    _getCard(const Icon(Icons.build, color: Colors.brown, size: 32), 'Open Source Software', 'Version $_version', _launchURI, 'https://cyprusfuelguide.com'),
+                    _getCard(const Icon(Icons.favorite, color: Colors.brown, size: 32), 'Loved the app?', 'Click to rate', _launchURI, _getMarketplaceLink()),
+                    Visibility(
+                      visible: !kIsWeb,
+                      child: _getCard(const Icon(Icons.share, color: Colors.brown, size: 32), 'Tell the world!', 'Share with your friends', _share, 'Get Cyprus Fuel Guide for Android and iOS for free at http://cyprusfuelguide.com'),
                     )
+                  ],
                 )
             )
         )
