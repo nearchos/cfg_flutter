@@ -1,2 +1,3 @@
-# cfg_flutter
- Cyprus Fuel Guide - Flutter
+# Cyprus Fuel Guide
+
+Cyprus Fuel Guide Flutter project.
