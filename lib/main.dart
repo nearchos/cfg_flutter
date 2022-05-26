@@ -1,11 +1,14 @@
 import 'package:cfg_flutter/keys.dart';
 import 'package:cfg_flutter/model/fuel_type.dart';
 import 'package:cfg_flutter/util.dart';
+import 'package:cfg_flutter/view_mode.dart';
 import 'package:cfg_flutter/widgets/about.dart';
 import 'package:cfg_flutter/widgets/cfg_drawer_header.dart';
+import 'package:cfg_flutter/widgets/cfg_radio_list-tile.dart';
 import 'package:cfg_flutter/widgets/fuel_page.dart';
 import 'package:cfg_flutter/widgets/station_page.dart';
 import 'package:cfg_flutter/widgets/syncing_progress_indicator.dart';
+import 'package:fluro/fluro.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cfg_flutter/model/sync_response.dart';
@@ -18,33 +21,45 @@ import 'networking.dart';
 void main() {
   // prepare admob
   WidgetsFlutterBinding.ensureInitialized();
-  MobileAds.instance.initialize();
+  if(!kIsWeb) {
+    MobileAds.instance.initialize();
+  }
 
-  runApp(const CyprusFuelGuideApp());
+  runApp(CyprusFuelGuideApp());
 }
 
 class CyprusFuelGuideApp extends StatelessWidget {
-  const CyprusFuelGuideApp({Key? key}) : super(key: key);
+
+  static final router = FluroRouter();
+
+  CyprusFuelGuideApp({Key? key}) : super(key: key) {
+    defineRoutes(router);
+  }
+
+  void defineRoutes(FluroRouter router) {
+    router.define("/", handler: Handler(handlerFunc: (context, params) => const CyprusFuelGuideAppPage(title: 'Cyprus Fuel Guide')));
+    router.define("/station/:code", handler: Handler(handlerFunc: (context, params) => StationPage(title: 'Station', code: params['code']![0])));
+    // todo add '/privacy'
+    router.define("/about", handler: Handler(handlerFunc: (context, params) => const AboutPage(title: 'About')));
+  }
 
   static const String keyLastSynced = 'KEY_LAST_SYNCED';
   static const String keyLastUpdateTimestamp = 'KEY_LAST_UPDATE_TIMESTAMP';
   static const String keyNumOfStations = 'KEY_NUM_OF_STATIONS';
   static const String keyLastRawJson = 'KEY_LAST_RAW_JSON';
+  static const String keySelectedFuelType = 'KEY_SELECTED_FUEL_TYPE';
+  static const String keySelectedViewMode = 'KEY_SELECTED_VIEW_MODE';
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'Cyprus Fuel Guide',
-        theme: ThemeData(
-          primarySwatch: Colors.amber,
-        ),
-        initialRoute: '/',
-        routes: {
-          '/': (context) => const CyprusFuelGuideAppPage(title: 'Cyprus Fuel Guide'),
-          '/station': (context) => const StationPage(title: 'Station'),
-          '/about': (context) => const AboutPage(title: 'About'),
-        }
+      title: 'Cyprus Fuel Guide',
+      theme: ThemeData(
+        primarySwatch: Colors.amber,
+      ),
+      initialRoute: '/',
+      onGenerateRoute: CyprusFuelGuideApp.router.generator,
     );
   }
 }
@@ -132,12 +147,41 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
     });
   }
 
+  late FuelType _fuelType = FuelType.petrol95;
+
+  _selectFuelType(FuelType? fuelType) {
+    _prefs.then((SharedPreferences sharedPreferences) {
+      fuelType = fuelType ?? FuelType.petrol95;
+      sharedPreferences.setInt(CyprusFuelGuideApp.keySelectedFuelType, fuelType!.index);
+      setState(() => _fuelType = fuelType!);
+    });
+  }
+
+  late ViewMode _viewMode = ViewMode.overview;
+
+  _selectViewMode(ViewMode? viewMode) {
+    _prefs.then((SharedPreferences sharedPreferences) {
+      viewMode = viewMode ?? ViewMode.cheapest;
+      sharedPreferences.setInt(CyprusFuelGuideApp.keySelectedViewMode, viewMode!.index);
+      setState(() => _viewMode = viewMode!);
+    });
+  }
+
   @override
   void initState() {
     super.initState();
 
     _prefs.then((SharedPreferences prefs) {
+      // load saved fuel type selection
+      int fuelTypeIndex = prefs.getInt(CyprusFuelGuideApp.keySelectedFuelType) ?? FuelType.petrol95.index;
+      _fuelType = FuelType.values[fuelTypeIndex];
+      // load saved view mode selection
+      int viewModeIndex = prefs.getInt(CyprusFuelGuideApp.keySelectedViewMode) ?? ViewMode.overview.index;
+      _viewMode = ViewMode.values[viewModeIndex];
+      // load last synced value
       int lastSynced = prefs.getInt(CyprusFuelGuideApp.keyLastSynced) ?? 0;
+      _lastSynced = lastSynced;
+
       int millisecondsSinceLastSync = DateTime.now().millisecondsSinceEpoch - lastSynced;
       // Check if need to sync...
       if(lastSynced == 0 || millisecondsSinceLastSync > Util.oneHourInMilliseconds) {
@@ -151,6 +195,7 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
         // No need to sync - loading from prefs
         _loadFromPrefs();
       }
+      setState(() {}); // trigger a state update
     });
   }
 
@@ -160,7 +205,9 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
   Widget build(BuildContext context) {
     if (!_loadingAnchoredBanner) {
       _loadingAnchoredBanner = true;
-      _createAnchoredBanner(context);
+      if(!kIsWeb) { // no ads on Web
+        _createAnchoredBanner(context);
+      }
     }
     return MaterialApp(
       theme: ThemeData(
@@ -186,41 +233,112 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
             child: ListView(
               padding: EdgeInsets.zero, // remove any padding from the ListView.
               children: [
+
                 const CfgDrawerHeader(),
-                ListTile(
-                  title: const Text('Favorites'),
-                  subtitle: Text(_getFavoritesSubtitle()),
-                  leading: const Icon(Icons.favorite_border_outlined),
-                  onTap: () {
-                    // todo
-                    _scaffoldKey.currentState!.closeDrawer();
-                  },
+
+                CfgRadioListTile<FuelType>(
+                  value: FuelType.petrol95,
+                  groupValue: _fuelType,
+                  leading: 'P95',
+                  dense: true,
+                  title: 'Unleaded 95',
+                  onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
                 ),
+                CfgRadioListTile<FuelType>(
+                  value: FuelType.petrol98,
+                  groupValue: _fuelType,
+                  leading: 'P98',
+                  dense: true,
+                  title: 'Unleaded 98',
+                  onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
+                ),
+                CfgRadioListTile<FuelType>(
+                  value: FuelType.diesel,
+                  groupValue: _fuelType,
+                  leading: 'DIE',
+                  dense: true,
+                  title: 'Diesel',
+                  onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
+                ),
+                CfgRadioListTile<FuelType>(
+                  value: FuelType.heating,
+                  groupValue: _fuelType,
+                  leading: 'HEA',
+                  dense: true,
+                  title: 'Heating',
+                  onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
+                ),
+                CfgRadioListTile<FuelType>(
+                  value: FuelType.kerosene,
+                  groupValue: _fuelType,
+                  leading: 'KER',
+                  dense: true,
+                  title: 'Kerosene',
+                  onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
+                ),
+
+                const Divider(),
+
+                CfgRadioListTile<ViewMode>(
+                  value: ViewMode.overview,
+                  groupValue: _viewMode,
+                  icon: const Icon(Icons.local_gas_station_outlined, color: Colors.brown,),
+                  dense: true,
+                  title: 'Overview',
+                  onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
+                ),
+                CfgRadioListTile<ViewMode>(
+                  value: ViewMode.cheapest,
+                  groupValue: _viewMode,
+                  icon: const Icon(Icons.euro, color: Colors.brown,),
+                  dense: true,
+                  title: 'Cheapest',
+                  onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
+                ),
+                CfgRadioListTile<ViewMode>(
+                  value: ViewMode.nearest,
+                  groupValue: _viewMode,
+                  icon: const Icon(Icons.near_me_outlined, color: Colors.brown,),
+                  dense: true,
+                  title: 'Nearest',
+                  onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
+                ),
+                CfgRadioListTile<ViewMode>(
+                  value: ViewMode.favorites,
+                  groupValue: _viewMode,
+                  icon: const Icon(Icons.favorite_border_outlined, color: Colors.brown,),
+                  dense: true,
+                  title: 'Favorites',
+                  onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
+                ),
+                const Divider(),
                 ListTile(
                   title: const Text('Statistics'),
-                  subtitle: Text(_getStatisticsSubtitle()),
-                  leading: const Icon(Icons.stacked_line_chart),
+                  dense: true,
+                  leading: const Icon(Icons.stacked_line_chart, color: Colors.brown),
                   onTap: () {
                     // todo
                     _scaffoldKey.currentState!.closeDrawer();
-                    Navigator.pushNamed(context, '/station', arguments: _syncResponse!.stations[0].code);
+                    CyprusFuelGuideApp.router.navigateTo(context, '/station/${_syncResponse!.stations[2].code}');
                   },
                 ),
+                const Divider(),
                 ListTile(
                   title: const Text('Synchronize'),
                   subtitle: Text(_isSyncing ? 'Syncing ...' : _getSynchronizeSubtitle()),
-                  leading: const Icon(Icons.sync),
+                  dense: true,
+                  leading: const Icon(Icons.sync, color: Colors.brown),
                   onTap: () {
                     _isSyncing || (DateTime.now().millisecondsSinceEpoch - _lastSynced < Util.oneMinuteInMilliseconds) ? null : _synchronize();
                   },
                 ),
                 ListTile(
                   title: const Text('About'),
-                  subtitle: const Text('Developed by aspectsense.com'),
-                  leading: const Icon(Icons.info_outline),
+                  dense: true,
+                  leading: const Icon(Icons.info_outline, color: Colors.brown),
                   onTap: () {
                     _scaffoldKey.currentState!.closeDrawer();
-                    Navigator.pushNamed(context, '/about', arguments: {_syncResponse: _syncResponse});
+                    CyprusFuelGuideApp.router.navigateTo(context, '/about');
                   },
                 ),
               ],
@@ -258,18 +376,6 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
     );
   }
 
-  String _getFavoritesSubtitle() {
-    return 'You have no favorites'; // todo
-  }
-
-  String _getStatisticsSubtitle() {
-    if(_syncResponse == null) {
-      return 'Price trends across stations';
-    } else {
-      return 'Price trends across ${_syncResponse!.stations.length} stations';
-    }
-  }
-
   String _getSynchronizeSubtitle() {
     if(_lastSynced == 0) {
       return 'Not synced yet';
@@ -277,7 +383,7 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
       int millisecondsSinceLastSync = DateTime.now().millisecondsSinceEpoch - _lastSynced;
       if(millisecondsSinceLastSync < 2 * Util.oneSecondInMilliseconds) {
         return 'Last synced just now!';
-      } else if(millisecondsSinceLastSync < Util.oneMinuteInMilliseconds) {
+      } else if(millisecondsSinceLastSync < 2 * Util.oneMinuteInMilliseconds) {
         return 'Last synced ${millisecondsSinceLastSync ~/ Util.oneSecondInMilliseconds} seconds ago';
       } else if(millisecondsSinceLastSync < 2 * Util.oneHourInMilliseconds) {
         return 'Last synced ${millisecondsSinceLastSync ~/ Util.oneMinuteInMilliseconds} minutes ago';

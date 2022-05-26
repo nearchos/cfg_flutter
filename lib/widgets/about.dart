@@ -44,39 +44,34 @@ class AboutState extends State<AboutPage> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-        theme: ThemeData(
-          primarySwatch: Colors.amber,
+    return Scaffold(
+        appBar: AppBar(
+          title: Text(widget.title),
+          leading: IconButton(icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.of(context).pop(false)),
         ),
-        home: Scaffold(
-            appBar: AppBar(
-              title: Text(widget.title),
-              leading: IconButton(icon: const Icon(Icons.arrow_back),
-                  onPressed: () => Navigator.of(context).pop(false)),
+        body: Container(
+            decoration: BoxDecoration(
+              color: Colors.amber[50],
+              image: const DecorationImage(
+                  image: AssetImage("images/skyline_outline.png"),
+                  fit: BoxFit.none,
+                  repeat: ImageRepeat.noRepeat,
+                  alignment: Alignment.bottomCenter
+              ),
             ),
-            body: Container(
-                decoration: BoxDecoration(
-                  color: Colors.amber[50],
-                  image: const DecorationImage(
-                      image: AssetImage("images/skyline_outline.png"),
-                      fit: BoxFit.none,
-                      repeat: ImageRepeat.noRepeat,
-                      alignment: Alignment.bottomCenter
-                  ),
-                ),
-                child: ListView(
-                  children: [
-                    _getCard(Image.asset('icons/launcher.png', width: 32, height: 32), 'Cyprus Fuel Guide', 'http://cyprusfuelguide.com', _launchURI, 'http://cyprusfuelguide.com'),
-                    _getCard(const Icon(Icons.data_array, color: Colors.brown, size: 32), databaseTitle, databaseSubtitle, _launchURI, 'https://cyprusfuelguide.com'),
-                    _getCard(const Icon(Icons.code, color: Colors.brown, size: 32), 'Developed with ❤ by', 'http://aspectsense.com', _launchURI, 'http://aspectsense.com'),
-                    _getCard(const Icon(Icons.build, color: Colors.brown, size: 32), 'Open Source Software', 'Version $_version', _launchURI, 'https://cyprusfuelguide.com'),
-                    _getCard(const Icon(Icons.favorite, color: Colors.brown, size: 32), 'Loved the app?', 'Click to rate', _launchURI, _getMarketplaceLink()),
-                    Visibility(
-                      visible: !kIsWeb,
-                      child: _getCard(const Icon(Icons.share, color: Colors.brown, size: 32), 'Tell the world!', 'Share with your friends', _share, 'Get Cyprus Fuel Guide for Android and iOS for free at http://cyprusfuelguide.com'),
-                    )
-                  ],
+            child: ListView(
+              children: [
+                _getCard(Image.asset('icons/launcher.png', width: 32, height: 32), 'Cyprus Fuel Guide', 'http://cyprusfuelguide.com', _launchURI, 'http://cyprusfuelguide.com'),
+                _getCard(const Icon(Icons.data_array, color: Colors.brown, size: 32), databaseTitle, databaseSubtitle, _launchURI, 'https://cyprusfuelguide.com'),
+                _getCard(const Icon(Icons.code, color: Colors.brown, size: 32), 'Developed with ❤ by', 'http://aspectsense.com', _launchURI, 'http://aspectsense.com'),
+                _getCard(const Icon(Icons.build, color: Colors.brown, size: 32), 'Open Source Software', 'Version $_version', _launchURI, 'https://cyprusfuelguide.com'),
+                _getCard(const Icon(Icons.favorite, color: Colors.brown, size: 32), 'Loved the app?', 'Click to rate', _launchURI, _getMarketplaceLink()),
+                Visibility(
+                  visible: !kIsWeb,
+                  child: _getCard(const Icon(Icons.share, color: Colors.brown, size: 32), 'Tell the world!', 'Share with your friends', _share, 'Get Cyprus Fuel Guide for Android and iOS for free at http://cyprusfuelguide.com'),
                 )
+              ],
             )
         )
     );

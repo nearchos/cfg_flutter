@@ -5,7 +5,9 @@ class CfgDrawerHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DrawerHeader(
+    final double statusBarHeight = MediaQuery.of(context).padding.top;
+    return Container(
+        padding: EdgeInsets.fromLTRB(16.0, statusBarHeight + 16.0, 16.0, 16.0),
         decoration: const BoxDecoration(
           gradient: LinearGradient(
               colors: [
@@ -14,10 +16,11 @@ class CfgDrawerHeader extends StatelessWidget {
               ]
           ),
         ),
-        child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Image(image: AssetImage('icons/launcher.png'), height: 100,),
+              const Image(image: AssetImage('icons/launcher.png'), height: 50,),
+              const SizedBox(width: 10,),
               Text('Cyprus Fuel Guide', style: Theme.of(context).textTheme.headline6),
             ]
         )

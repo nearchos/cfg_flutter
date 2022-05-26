@@ -53,8 +53,8 @@ dependencies:
   # https://pub.dev/packages/share_plus
   share_plus: ^4.0.4
 
-  # https://pub.dev/packages/adaptive_navigation
-  adaptive_navigation: ^0.0.6
+  # https://pub.dev/packages/fluro
+  fluro: ^2.0.3
 
 dev_dependencies:
   flutter_test:
