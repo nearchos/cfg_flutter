@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:cfg_flutter/model/favorites.dart';
 import 'package:cfg_flutter/model/sync_response.dart';
 import 'package:cfg_flutter/widgets/fuel_type_statistics.dart';
+import 'package:cfg_flutter/widgets/no_favorites_card.dart';
+import 'package:cfg_flutter/widgets/unknown_location_card.dart';
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,9 +16,8 @@ import '../model/station.dart';
 import '../util.dart';
 
 class OverviewPage extends StatefulWidget {
-  const OverviewPage({Key? key, required this.fuelType, required this.syncResponse}) : super(key: key);
+  const OverviewPage({Key? key, required this.syncResponse}) : super(key: key);
 
-  final FuelType fuelType;
   final SyncResponse? syncResponse;
 
   @override
@@ -36,26 +37,21 @@ class _OverviewPageState extends State<OverviewPage> {
   void initState() {
     super.initState();
 
-    _prefs.then((SharedPreferences prefs) {
-      int fuelTypeIndex = prefs.getInt(
-          CyprusFuelGuideApp.keySelectedFuelType) ?? FuelType.petrol95.index;
-      setState(() {
-        _fuelType = FuelType.values[fuelTypeIndex];
-      });
-    });
-
-    _loadFavorites();
+    _loadFromPreferences();
 
     location.getLocation().then((LocationData locationData) {
       setState(() => _locationData = locationData);
     });
   }
 
-  void _loadFavorites() {
+  void _loadFromPreferences() {
     _prefs.then((SharedPreferences prefs) {
+      int fuelTypeIndex = prefs.getInt(
+          CyprusFuelGuideApp.keySelectedFuelType) ?? FuelType.petrol95.index;
       final String? favoriteStationCodesRawJson = prefs.getString(
           CyprusFuelGuideApp.keyFavoriteStationCodesRawJson);
       setState(() {
+        _fuelType = FuelType.values[fuelTypeIndex];
         _favorites = favoriteStationCodesRawJson != null ? Favorites.fromJson(
             jsonDecode(favoriteStationCodesRawJson)) : Favorites.empty();
       });
@@ -68,7 +64,7 @@ class _OverviewPageState extends State<OverviewPage> {
         ?
     const Text('No data')
         :
-    _getListView(widget.syncResponse!, widget.fuelType);
+    _getListView(widget.syncResponse!, _fuelType);
   }
 
   Widget _getListView(SyncResponse syncResponse, FuelType fuelType) {
@@ -99,13 +95,13 @@ class _OverviewPageState extends State<OverviewPage> {
     }
     // compute best price among favorites
     int bestPrice = fuelTypeStatistics.maxPrice;
-    syncResponse.prices.forEach((Price price) {
+    for (final Price price in syncResponse.prices) {
       if(_favorites.contains(price.stationCode)) {
         if(price.prices[_fuelType.index] < bestPrice) {
           bestPrice = price.prices[_fuelType.index];
         }
       }
-    });
+    }
 
     return ListView(
       children: [
@@ -114,17 +110,17 @@ class _OverviewPageState extends State<OverviewPage> {
         // check location
         _locationData == null
             ?
-        _getUnknownLocationCard()
+        const UnknownLocationCard()
             :
         _getCard(const Icon(Icons.near_me_outlined, color: Colors.green), 'Nearest station ${Util.formatDistance(nearestStationDistance)} away', 'Prices from €${nearestStationPrice!/1000}', _navToStationsByDistance),
         // check favorites
         _favorites.isEmpty()
             ?
-        _getNoFavoritesCard()
+        const NoFavoritesCard()
             :
-        _getCard(const Icon(Icons.check_box_outlined, color: Colors.green), 'Best price €${(bestPrice/1000).toStringAsFixed(3)} in favorites', 'Comparing prices from ${_favorites.length()} favorites', _navToFavoriteStations),//todo
+        _getCard(const Icon(Icons.check_box_outlined, color: Colors.green), 'Best price €${(bestPrice/1000).toStringAsFixed(3)} in favorites', 'Comparing prices from ${_favorites.length()} favorite${_favorites.length() > 2 ? 's' : ''}', _navToFavoriteStations),
         // stats
-        _getCard(const Icon(Icons.stacked_line_chart_outlined, color: Colors.green), 'Trends', 'Trends in prices', _navToStationsByPrice),
+        _getCard(const Icon(Icons.stacked_line_chart_outlined, color: Colors.green), 'Trends', 'Trends in prices', _navToTrendsPage),
       ],
     );
   }
@@ -161,77 +157,19 @@ class _OverviewPageState extends State<OverviewPage> {
     );
   }
 
-  Widget _getUnknownLocationCard() {
-    return Padding(
-        padding: const EdgeInsets.fromLTRB(8, 16, 8, 0),
-        child: Card(
-            elevation: 4,
-            child: InkWell(
-              child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Container(width: 5),
-                      const Icon(Icons.near_me_outlined, color: Colors.grey),
-                      Container(width: 15),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Unknown location', style: Theme.of(context).textTheme.titleMedium),
-                            Container(height: 12),
-                            Text('Make sure your location service is turned on', style: Theme.of(context).textTheme.caption),
-                          ],
-                        ),
-                      )
-                    ],
-                  )
-              ),
-            )
-        )
-    );
-  }
-
-  Widget _getNoFavoritesCard() {
-    return Padding(
-        padding: const EdgeInsets.fromLTRB(8, 16, 8, 0),
-        child: Card(
-            elevation: 4,
-            child: InkWell(
-              child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Container(width: 5),
-                      const Icon(Icons.check_box_outlined, color: Colors.grey),
-                      Container(width: 15),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('No favorites selected', style: Theme.of(context).textTheme.titleMedium),
-                            Container(height: 12),
-                            Text('Check any stations to mark as favorite', style: Theme.of(context).textTheme.caption),
-                          ],
-                        ),
-                      )
-                    ],
-                  )
-              ),
-            )
-        )
-    );
-  }
-
   void _navToStationsByPrice() async {
-    CyprusFuelGuideApp.router.navigateTo(context, '/stationsByPrice').then((_) => _loadFavorites());
+    CyprusFuelGuideApp.router.navigateTo(context, '/stationsByPrice').then((_) => _loadFromPreferences());
   }
 
   void _navToStationsByDistance() async {
-    CyprusFuelGuideApp.router.navigateTo(context, '/stationsByDistance').then((_) => _loadFavorites());
+    CyprusFuelGuideApp.router.navigateTo(context, '/stationsByDistance').then((_) => _loadFromPreferences());
   }
 
   void _navToFavoriteStations() async {
-    CyprusFuelGuideApp.router.navigateTo(context, '/favoriteStations').then((_) => _loadFavorites());
+    CyprusFuelGuideApp.router.navigateTo(context, '/favoriteStations').then((_) => _loadFromPreferences());
+  }
+
+  void _navToTrendsPage() async {
+    CyprusFuelGuideApp.router.navigateTo(context, '/trends');
   }
 }

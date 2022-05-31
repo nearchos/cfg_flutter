@@ -4,12 +4,13 @@ import 'package:cfg_flutter/util.dart';
 import 'package:cfg_flutter/view_mode.dart';
 import 'package:cfg_flutter/widgets/about.dart';
 import 'package:cfg_flutter/widgets/cfg_drawer_header.dart';
-import 'package:cfg_flutter/widgets/cfg_radio_list-tile.dart';
+import 'package:cfg_flutter/widgets/cfg_radio_list_tile.dart';
 import 'package:cfg_flutter/widgets/overview_page.dart';
-import 'package:cfg_flutter/widgets/info_tile.dart';
+import 'package:cfg_flutter/widgets/privacy.dart';
 import 'package:cfg_flutter/widgets/station_page.dart';
 import 'package:cfg_flutter/widgets/stations_page.dart';
 import 'package:cfg_flutter/widgets/syncing_progress_indicator.dart';
+import 'package:cfg_flutter/widgets/trends_page.dart';
 import 'package:fluro/fluro.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -43,8 +44,9 @@ class CyprusFuelGuideApp extends StatelessWidget {
     router.define("/stationsByPrice", handler: Handler(handlerFunc: (context, params) => const StationsPage(title: 'Stations by price', viewMode: ViewMode.cheapest)));
     router.define("/stationsByDistance", handler: Handler(handlerFunc: (context, params) => const StationsPage(title: 'Stations by distance', viewMode: ViewMode.nearest)));
     router.define("/favoriteStations", handler: Handler(handlerFunc: (context, params) => const StationsPage(title: 'Favorite stations', viewMode: ViewMode.favorites)));
+    router.define("/trends", handler: Handler(handlerFunc: (context, params) => const TrendsPage(title: 'Trends', viewMode: ViewMode.favorites)));
     router.define("/station/:code", handler: Handler(handlerFunc: (context, params) => StationPage(code: params['code']![0])));
-    // todo add '/privacy'
+    router.define("/privacy", handler: Handler(handlerFunc: (context, params) => const PrivacyPage(title: 'Privacy')));
     router.define("/about", handler: Handler(handlerFunc: (context, params) => const AboutPage(title: 'About')));
   }
 
@@ -272,52 +274,66 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
                 onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
               ),
 
-              const Divider(),
+              // const Divider(),
+              //
+              // CfgRadioListTile<ViewMode>(
+              //   value: ViewMode.overview,
+              //   groupValue: _viewMode,
+              //   icon: const Icon(Icons.local_gas_station_outlined, color: Colors.brown,),
+              //   dense: true,
+              //   title: 'Overview',
+              //   onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
+              // ),
+              // CfgRadioListTile<ViewMode>(
+              //   value: ViewMode.cheapest,
+              //   groupValue: _viewMode,
+              //   icon: const Icon(Icons.euro, color: Colors.brown,),
+              //   dense: true,
+              //   title: 'Cheapest',
+              //   onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
+              // ),
+              // CfgRadioListTile<ViewMode>(
+              //   value: ViewMode.nearest,
+              //   groupValue: _viewMode,
+              //   icon: const Icon(Icons.near_me_outlined, color: Colors.brown,),
+              //   dense: true,
+              //   title: 'Nearest',
+              //   onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
+              // ),
+              // CfgRadioListTile<ViewMode>(
+              //   value: ViewMode.favorites,
+              //   groupValue: _viewMode,
+              //   icon: const Icon(Icons.favorite_border_outlined, color: Colors.brown,),
+              //   dense: true,
+              //   title: 'Favorites',
+              //   onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
+              // ),
+              // ListTile(
+              //   title: const Text('Trends'),
+              //   dense: true,
+              //   leading: const Icon(Icons.stacked_line_chart, color: Colors.brown),
+              //   onTap: () {
+              //     _scaffoldKey.currentState!.closeDrawer();
+              //     CyprusFuelGuideApp.router.navigateTo(context, '/trends');
+              //   },
+              // ),
 
-              CfgRadioListTile<ViewMode>(
-                value: ViewMode.overview,
-                groupValue: _viewMode,
-                icon: const Icon(Icons.local_gas_station_outlined, color: Colors.brown,),
-                dense: true,
-                title: 'Overview',
-                onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
-              ),
-              CfgRadioListTile<ViewMode>(
-                value: ViewMode.cheapest,
-                groupValue: _viewMode,
-                icon: const Icon(Icons.euro, color: Colors.brown,),
-                dense: true,
-                title: 'Cheapest',
-                onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
-              ),
-              CfgRadioListTile<ViewMode>(
-                value: ViewMode.nearest,
-                groupValue: _viewMode,
-                icon: const Icon(Icons.near_me_outlined, color: Colors.brown,),
-                dense: true,
-                title: 'Nearest',
-                onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
-              ),
-              CfgRadioListTile<ViewMode>(
-                value: ViewMode.favorites,
-                groupValue: _viewMode,
-                icon: const Icon(Icons.favorite_border_outlined, color: Colors.brown,),
-                dense: true,
-                title: 'Favorites',
-                onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
-              ),
               const Divider(),
               ListTile(
-                title: const Text('Statistics'),
+                title: const Text('Filters'),
                 dense: true,
-                leading: const Icon(Icons.stacked_line_chart, color: Colors.brown),
+                leading: const Icon(Icons.filter_list_outlined, color: Colors.brown),
                 onTap: () {
-                  // todo
                   _scaffoldKey.currentState!.closeDrawer();
-                  CyprusFuelGuideApp.router.navigateTo(context, '/station/${_syncResponse!.stations[2].code}');
+                  CyprusFuelGuideApp.router.navigateTo(context, '/filters');
                 },
               ),
+
               const Divider(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(72, 4, 8, 0),
+                child: Text('Data from the Ministry of Energy, Commerce, Industry, and Tourism', style: Theme.of(context).textTheme.bodySmall,),
+              ),
               ListTile(
                 title: const Text('Synchronize'),
                 subtitle: Text(_isSyncing ? 'Syncing ...' : _getSynchronizeSubtitle()),
@@ -325,6 +341,17 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
                 leading: const Icon(Icons.sync, color: Colors.brown),
                 onTap: () {
                   _isSyncing || (DateTime.now().millisecondsSinceEpoch - _lastSynced < Util.oneMinuteInMilliseconds) ? null : _synchronize();
+                },
+              ),
+
+              const Divider(),
+              ListTile(
+                title: const Text('Privacy'),
+                dense: true,
+                leading: const Icon(Icons.privacy_tip_outlined, color: Colors.brown),
+                onTap: () {
+                  _scaffoldKey.currentState!.closeDrawer();
+                  CyprusFuelGuideApp.router.navigateTo(context, '/privacy');
                 },
               ),
               ListTile(
@@ -346,7 +373,7 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
           children: [
             // InfoTileWidget(fuelType: _fuelType, viewMode: _viewMode),
             Expanded(
-                child: OverviewPage(fuelType: FuelType.petrol95, syncResponse: _syncResponse)
+                child: OverviewPage(syncResponse: _syncResponse)
             ),
             kIsWeb || _anchoredBanner == null
                 ? Container() // empty if no ads

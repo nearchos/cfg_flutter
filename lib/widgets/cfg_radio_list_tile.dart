@@ -47,6 +47,7 @@ class CfgRadioListTile<T> extends StatelessWidget {
   Widget get _customRadioButton {
     final isSelected = value == groupValue;
     return Container(
+      width: dense ? 42 : 54,
       padding: EdgeInsets.symmetric(horizontal: dense ? 10 : 16, vertical: dense ? 6 : 8),
       decoration: BoxDecoration(
         color: isSelected ? Colors.amber : null,
