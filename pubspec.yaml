@@ -56,6 +56,12 @@ dependencies:
   # https://pub.dev/packages/fluro
   fluro: ^2.0.3
 
+  # https://pub.dev/packages/marquee
+  marquee: ^2.2.1
+
+  # https://pub.dev/packages/location
+  location: ^4.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -86,6 +92,17 @@ flutter:
   assets:
     - icons/launcher.png
     - images/skyline_outline.png
+    - images/agip.png
+    - images/eko.png
+    - images/eni.png
+    - images/esso.png
+    - images/fill_n_go.png
+    - images/independent.png
+    - images/lukoil.png
+    - images/petrolina.png
+    - images/shell.png
+    - images/staroil.png
+    - images/total.png
 
   fonts:
     - family: RobotoMono

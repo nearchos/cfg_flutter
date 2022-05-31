@@ -7,9 +7,8 @@ import '../model/price.dart';
 import '../model/station.dart';
 
 class StationPage extends StatefulWidget {
-  const StationPage({Key? key, required this.title, required this.code}) : super(key: key);
+  const StationPage({Key? key, required this.code}) : super(key: key);
 
-  final String title;
   final String code; // station code
 
   @override
@@ -21,6 +20,7 @@ class _StationPageState extends State<StationPage> {
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   Station? _station;
   Price? _price;
+  String _title = 'Station';
 
   @override
   void initState() {
@@ -34,6 +34,7 @@ class _StationPageState extends State<StationPage> {
       setState(() {
         _station = stations.firstWhere((s) => s.code == widget.code);
         _price = prices.firstWhere((p) => p.stationCode == widget.code);
+        _title = _station!.name;
       });
     });
   }
@@ -42,7 +43,7 @@ class _StationPageState extends State<StationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text(widget.title),
+          title: Text(_title),
           leading: IconButton(icon: const Icon(Icons.arrow_back),
               onPressed: () => Navigator.of(context).pop(false)),
         ),

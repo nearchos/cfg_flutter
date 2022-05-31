@@ -12,7 +12,7 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
-	<key>CFBundleName</key>
+	<key>Cyprus Fuel Guide</key>
 	<string>cfg_flutter</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
@@ -45,5 +45,8 @@
 	<false/>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>This application requires location services to work</string>
+
 </dict>
 </plist>

@@ -5,8 +5,10 @@ import 'package:cfg_flutter/view_mode.dart';
 import 'package:cfg_flutter/widgets/about.dart';
 import 'package:cfg_flutter/widgets/cfg_drawer_header.dart';
 import 'package:cfg_flutter/widgets/cfg_radio_list-tile.dart';
-import 'package:cfg_flutter/widgets/fuel_page.dart';
+import 'package:cfg_flutter/widgets/overview_page.dart';
+import 'package:cfg_flutter/widgets/info_tile.dart';
 import 'package:cfg_flutter/widgets/station_page.dart';
+import 'package:cfg_flutter/widgets/stations_page.dart';
 import 'package:cfg_flutter/widgets/syncing_progress_indicator.dart';
 import 'package:fluro/fluro.dart';
 import 'package:flutter/foundation.dart';
@@ -38,7 +40,10 @@ class CyprusFuelGuideApp extends StatelessWidget {
 
   void defineRoutes(FluroRouter router) {
     router.define("/", handler: Handler(handlerFunc: (context, params) => const CyprusFuelGuideAppPage(title: 'Cyprus Fuel Guide')));
-    router.define("/station/:code", handler: Handler(handlerFunc: (context, params) => StationPage(title: 'Station', code: params['code']![0])));
+    router.define("/stationsByPrice", handler: Handler(handlerFunc: (context, params) => const StationsPage(title: 'Stations by price', viewMode: ViewMode.cheapest)));
+    router.define("/stationsByDistance", handler: Handler(handlerFunc: (context, params) => const StationsPage(title: 'Stations by distance', viewMode: ViewMode.nearest)));
+    router.define("/favoriteStations", handler: Handler(handlerFunc: (context, params) => const StationsPage(title: 'Favorite stations', viewMode: ViewMode.favorites)));
+    router.define("/station/:code", handler: Handler(handlerFunc: (context, params) => StationPage(code: params['code']![0])));
     // todo add '/privacy'
     router.define("/about", handler: Handler(handlerFunc: (context, params) => const AboutPage(title: 'About')));
   }
@@ -47,6 +52,7 @@ class CyprusFuelGuideApp extends StatelessWidget {
   static const String keyLastUpdateTimestamp = 'KEY_LAST_UPDATE_TIMESTAMP';
   static const String keyNumOfStations = 'KEY_NUM_OF_STATIONS';
   static const String keyLastRawJson = 'KEY_LAST_RAW_JSON';
+  static const String keyFavoriteStationCodesRawJson = 'KEY_FAVORITE_STATION_CODES_RAW_JSON';
   static const String keySelectedFuelType = 'KEY_SELECTED_FUEL_TYPE';
   static const String keySelectedViewMode = 'KEY_SELECTED_VIEW_MODE';
 
@@ -213,164 +219,146 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
       theme: ThemeData(
         primarySwatch: Colors.amber,
       ),
-      home: DefaultTabController(
-        length: 5,
-        child: Scaffold(
-          key: _scaffoldKey,
-          appBar: AppBar(
-            bottom: const TabBar(
-              tabs: [
-                Tab(text: 'p95'),
-                Tab(text: 'p98'),
-                Tab(text: 'die',),
-                Tab(text: 'hea',),
-                Tab(text: 'ker',),
-              ],
-            ),
-            title: Text(widget.title),
-          ),
-          drawer: Drawer(
-            child: ListView(
-              padding: EdgeInsets.zero, // remove any padding from the ListView.
-              children: [
-
-                const CfgDrawerHeader(),
-
-                CfgRadioListTile<FuelType>(
-                  value: FuelType.petrol95,
-                  groupValue: _fuelType,
-                  leading: 'P95',
-                  dense: true,
-                  title: 'Unleaded 95',
-                  onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
-                ),
-                CfgRadioListTile<FuelType>(
-                  value: FuelType.petrol98,
-                  groupValue: _fuelType,
-                  leading: 'P98',
-                  dense: true,
-                  title: 'Unleaded 98',
-                  onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
-                ),
-                CfgRadioListTile<FuelType>(
-                  value: FuelType.diesel,
-                  groupValue: _fuelType,
-                  leading: 'DIE',
-                  dense: true,
-                  title: 'Diesel',
-                  onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
-                ),
-                CfgRadioListTile<FuelType>(
-                  value: FuelType.heating,
-                  groupValue: _fuelType,
-                  leading: 'HEA',
-                  dense: true,
-                  title: 'Heating',
-                  onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
-                ),
-                CfgRadioListTile<FuelType>(
-                  value: FuelType.kerosene,
-                  groupValue: _fuelType,
-                  leading: 'KER',
-                  dense: true,
-                  title: 'Kerosene',
-                  onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
-                ),
-
-                const Divider(),
-
-                CfgRadioListTile<ViewMode>(
-                  value: ViewMode.overview,
-                  groupValue: _viewMode,
-                  icon: const Icon(Icons.local_gas_station_outlined, color: Colors.brown,),
-                  dense: true,
-                  title: 'Overview',
-                  onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
-                ),
-                CfgRadioListTile<ViewMode>(
-                  value: ViewMode.cheapest,
-                  groupValue: _viewMode,
-                  icon: const Icon(Icons.euro, color: Colors.brown,),
-                  dense: true,
-                  title: 'Cheapest',
-                  onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
-                ),
-                CfgRadioListTile<ViewMode>(
-                  value: ViewMode.nearest,
-                  groupValue: _viewMode,
-                  icon: const Icon(Icons.near_me_outlined, color: Colors.brown,),
-                  dense: true,
-                  title: 'Nearest',
-                  onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
-                ),
-                CfgRadioListTile<ViewMode>(
-                  value: ViewMode.favorites,
-                  groupValue: _viewMode,
-                  icon: const Icon(Icons.favorite_border_outlined, color: Colors.brown,),
-                  dense: true,
-                  title: 'Favorites',
-                  onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
-                ),
-                const Divider(),
-                ListTile(
-                  title: const Text('Statistics'),
-                  dense: true,
-                  leading: const Icon(Icons.stacked_line_chart, color: Colors.brown),
-                  onTap: () {
-                    // todo
-                    _scaffoldKey.currentState!.closeDrawer();
-                    CyprusFuelGuideApp.router.navigateTo(context, '/station/${_syncResponse!.stations[2].code}');
-                  },
-                ),
-                const Divider(),
-                ListTile(
-                  title: const Text('Synchronize'),
-                  subtitle: Text(_isSyncing ? 'Syncing ...' : _getSynchronizeSubtitle()),
-                  dense: true,
-                  leading: const Icon(Icons.sync, color: Colors.brown),
-                  onTap: () {
-                    _isSyncing || (DateTime.now().millisecondsSinceEpoch - _lastSynced < Util.oneMinuteInMilliseconds) ? null : _synchronize();
-                  },
-                ),
-                ListTile(
-                  title: const Text('About'),
-                  dense: true,
-                  leading: const Icon(Icons.info_outline, color: Colors.brown),
-                  onTap: () {
-                    _scaffoldKey.currentState!.closeDrawer();
-                    CyprusFuelGuideApp.router.navigateTo(context, '/about');
-                  },
-                ),
-              ],
-            ),
-          ),
-          body: _isSyncing
-              ? const SyncingProgressIndicator()
-              : Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+      home: Scaffold(
+        key: _scaffoldKey,
+        appBar: AppBar(
+          title: Text(widget.title),
+        ),
+        drawer: Drawer(
+          child: ListView(
+            padding: EdgeInsets.zero, // remove any padding from the ListView.
             children: [
-              Expanded(
-                  child: TabBarView(
-                    children: [
-                      FuelPage(fuelType: FuelType.petrol95, syncResponse: _syncResponse),
-                      FuelPage(fuelType: FuelType.petrol98, syncResponse: _syncResponse),
-                      FuelPage(fuelType: FuelType.diesel, syncResponse: _syncResponse),
-                      FuelPage(fuelType: FuelType.heating, syncResponse: _syncResponse),
-                      FuelPage(fuelType: FuelType.kerosene, syncResponse: _syncResponse),
-                    ],
-                  )),
-              kIsWeb || _anchoredBanner == null
-                  ? Container() // empty if no ads
-                  :
-              Container(
-                color: Colors.amber,
-                alignment: Alignment.center,
-                width: _anchoredBanner!.size.width.toDouble(),
-                height: _anchoredBanner!.size.height.toDouble(),
-                child: AdWidget(ad: _anchoredBanner!),
-              ) // shows ads only on Web
+
+              const CfgDrawerHeader(),
+
+              CfgRadioListTile<FuelType>(
+                value: FuelType.petrol95,
+                groupValue: _fuelType,
+                leading: 'P95',
+                dense: true,
+                title: 'Unleaded 95',
+                onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
+              ),
+              CfgRadioListTile<FuelType>(
+                value: FuelType.petrol98,
+                groupValue: _fuelType,
+                leading: 'P98',
+                dense: true,
+                title: 'Unleaded 98',
+                onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
+              ),
+              CfgRadioListTile<FuelType>(
+                value: FuelType.diesel,
+                groupValue: _fuelType,
+                leading: 'DIE',
+                dense: true,
+                title: 'Diesel',
+                onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
+              ),
+              CfgRadioListTile<FuelType>(
+                value: FuelType.heating,
+                groupValue: _fuelType,
+                leading: 'HEA',
+                dense: true,
+                title: 'Heating',
+                onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
+              ),
+              CfgRadioListTile<FuelType>(
+                value: FuelType.kerosene,
+                groupValue: _fuelType,
+                leading: 'KER',
+                dense: true,
+                title: 'Kerosene',
+                onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
+              ),
+
+              const Divider(),
+
+              CfgRadioListTile<ViewMode>(
+                value: ViewMode.overview,
+                groupValue: _viewMode,
+                icon: const Icon(Icons.local_gas_station_outlined, color: Colors.brown,),
+                dense: true,
+                title: 'Overview',
+                onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
+              ),
+              CfgRadioListTile<ViewMode>(
+                value: ViewMode.cheapest,
+                groupValue: _viewMode,
+                icon: const Icon(Icons.euro, color: Colors.brown,),
+                dense: true,
+                title: 'Cheapest',
+                onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
+              ),
+              CfgRadioListTile<ViewMode>(
+                value: ViewMode.nearest,
+                groupValue: _viewMode,
+                icon: const Icon(Icons.near_me_outlined, color: Colors.brown,),
+                dense: true,
+                title: 'Nearest',
+                onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
+              ),
+              CfgRadioListTile<ViewMode>(
+                value: ViewMode.favorites,
+                groupValue: _viewMode,
+                icon: const Icon(Icons.favorite_border_outlined, color: Colors.brown,),
+                dense: true,
+                title: 'Favorites',
+                onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
+              ),
+              const Divider(),
+              ListTile(
+                title: const Text('Statistics'),
+                dense: true,
+                leading: const Icon(Icons.stacked_line_chart, color: Colors.brown),
+                onTap: () {
+                  // todo
+                  _scaffoldKey.currentState!.closeDrawer();
+                  CyprusFuelGuideApp.router.navigateTo(context, '/station/${_syncResponse!.stations[2].code}');
+                },
+              ),
+              const Divider(),
+              ListTile(
+                title: const Text('Synchronize'),
+                subtitle: Text(_isSyncing ? 'Syncing ...' : _getSynchronizeSubtitle()),
+                dense: true,
+                leading: const Icon(Icons.sync, color: Colors.brown),
+                onTap: () {
+                  _isSyncing || (DateTime.now().millisecondsSinceEpoch - _lastSynced < Util.oneMinuteInMilliseconds) ? null : _synchronize();
+                },
+              ),
+              ListTile(
+                title: const Text('About'),
+                dense: true,
+                leading: const Icon(Icons.info_outline, color: Colors.brown),
+                onTap: () {
+                  _scaffoldKey.currentState!.closeDrawer();
+                  CyprusFuelGuideApp.router.navigateTo(context, '/about');
+                },
+              ),
             ],
           ),
+        ),
+        body: _isSyncing
+            ? const SyncingProgressIndicator()
+            : Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // InfoTileWidget(fuelType: _fuelType, viewMode: _viewMode),
+            Expanded(
+                child: OverviewPage(fuelType: FuelType.petrol95, syncResponse: _syncResponse)
+            ),
+            kIsWeb || _anchoredBanner == null
+                ? Container() // empty if no ads
+                :
+            Container(
+              color: Colors.amber,
+              alignment: Alignment.center,
+              width: _anchoredBanner!.size.width.toDouble(),
+              height: _anchoredBanner!.size.height.toDouble(),
+              child: AdWidget(ad: _anchoredBanner!),
+            ) // shows ads only on Web
+          ],
         ),
       ),
     );
@@ -392,4 +380,5 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
       }
     }
   }
+
 }
