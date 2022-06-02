@@ -15,16 +15,16 @@ import '../model/price.dart';
 import '../model/station.dart';
 import '../util.dart';
 
-class OverviewPage extends StatefulWidget {
-  const OverviewPage({Key? key, required this.syncResponse}) : super(key: key);
+class Overview extends StatefulWidget {
+  const Overview({Key? key, required this.syncResponse}) : super(key: key);
 
   final SyncResponse? syncResponse;
 
   @override
-  State<OverviewPage> createState() => _OverviewPageState();
+  State<Overview> createState() => _OverviewState();
 }
 
-class _OverviewPageState extends State<OverviewPage> {
+class _OverviewState extends State<Overview> {
 
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
 
@@ -106,7 +106,7 @@ class _OverviewPageState extends State<OverviewPage> {
     return ListView(
       children: [
         // best price cards
-        _getCard(const Icon(Icons.check, color: Colors.green), 'Best price €${(minPrice/1000).toStringAsFixed(3)} in $numOfStations stations', 'This is ${diff/10}¢ cheaper than the average, available in $numOfBestPriceStations station${numOfBestPriceStations > 1 ? "s" : ""}', _navToStationsByPrice),
+        _getCard(const Icon(Icons.euro_outlined, color: Colors.green), 'Best price €${(minPrice/1000).toStringAsFixed(3)} in $numOfStations stations', 'This is ${diff/10}¢ cheaper than the average, available in $numOfBestPriceStations station${numOfBestPriceStations > 1 ? "s" : ""}', _navToStationsByPrice),
         // check location
         _locationData == null
             ?

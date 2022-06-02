@@ -69,7 +69,6 @@ class _StationsPageState extends State<StationsPage> {
   }
 
   void _saveFavorites() {
-    print('*** saving favorites...');
     _prefs.then((SharedPreferences sharedPreferences) {
       String rawJson = jsonEncode(_favorites.toMap());
       sharedPreferences.setString(CyprusFuelGuideApp.keyFavoriteStationCodesRawJson, rawJson);

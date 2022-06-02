@@ -5,6 +5,7 @@ import 'package:cfg_flutter/view_mode.dart';
 import 'package:cfg_flutter/widgets/about.dart';
 import 'package:cfg_flutter/widgets/cfg_drawer_header.dart';
 import 'package:cfg_flutter/widgets/cfg_radio_list_tile.dart';
+import 'package:cfg_flutter/widgets/filter_brands_page.dart';
 import 'package:cfg_flutter/widgets/overview_page.dart';
 import 'package:cfg_flutter/widgets/privacy.dart';
 import 'package:cfg_flutter/widgets/station_page.dart';
@@ -46,6 +47,7 @@ class CyprusFuelGuideApp extends StatelessWidget {
     router.define("/favoriteStations", handler: Handler(handlerFunc: (context, params) => const StationsPage(title: 'Favorite stations', viewMode: ViewMode.favorites)));
     router.define("/trends", handler: Handler(handlerFunc: (context, params) => const TrendsPage(title: 'Trends', viewMode: ViewMode.favorites)));
     router.define("/station/:code", handler: Handler(handlerFunc: (context, params) => StationPage(code: params['code']![0])));
+    router.define("/filterBrands", handler: Handler(handlerFunc: (context, params) => const FilterBrandsPage(title: 'Filter brands')));
     router.define("/privacy", handler: Handler(handlerFunc: (context, params) => const PrivacyPage(title: 'Privacy')));
     router.define("/about", handler: Handler(handlerFunc: (context, params) => const AboutPage(title: 'About')));
   }
@@ -55,6 +57,7 @@ class CyprusFuelGuideApp extends StatelessWidget {
   static const String keyNumOfStations = 'KEY_NUM_OF_STATIONS';
   static const String keyLastRawJson = 'KEY_LAST_RAW_JSON';
   static const String keyFavoriteStationCodesRawJson = 'KEY_FAVORITE_STATION_CODES_RAW_JSON';
+  static const String keyBrandNamesRawJson = 'KEY_BRAND_NAMES_RAW_JSON';
   static const String keySelectedFuelType = 'KEY_SELECTED_FUEL_TYPE';
   static const String keySelectedViewMode = 'KEY_SELECTED_VIEW_MODE';
 
@@ -320,12 +323,12 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
 
               const Divider(),
               ListTile(
-                title: const Text('Filters'),
+                title: const Text('Filter brands'),
                 dense: true,
                 leading: const Icon(Icons.filter_list_outlined, color: Colors.brown),
                 onTap: () {
                   _scaffoldKey.currentState!.closeDrawer();
-                  CyprusFuelGuideApp.router.navigateTo(context, '/filters');
+                  CyprusFuelGuideApp.router.navigateTo(context, '/filterBrands');
                 },
               ),
 
@@ -373,7 +376,7 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
           children: [
             // InfoTileWidget(fuelType: _fuelType, viewMode: _viewMode),
             Expanded(
-                child: OverviewPage(syncResponse: _syncResponse)
+                child: Overview(syncResponse: _syncResponse)
             ),
             kIsWeb || _anchoredBanner == null
                 ? Container() // empty if no ads
