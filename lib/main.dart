@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:cfg_flutter/keys.dart';
+import 'package:cfg_flutter/model/brands.dart';
 import 'package:cfg_flutter/model/fuel_type.dart';
 import 'package:cfg_flutter/util.dart';
 import 'package:cfg_flutter/view_mode.dart';
@@ -168,13 +171,28 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
     });
   }
 
-  late ViewMode _viewMode = ViewMode.overview;
+  // late ViewMode _viewMode = ViewMode.overview;
+  //
+  // _selectViewMode(ViewMode? viewMode) {
+  //   _prefs.then((SharedPreferences sharedPreferences) {
+  //     viewMode = viewMode ?? ViewMode.cheapest;
+  //     sharedPreferences.setInt(CyprusFuelGuideApp.keySelectedViewMode, viewMode!.index);
+  //     setState(() => _viewMode = viewMode!);
+  //   });
+  // }
 
-  _selectViewMode(ViewMode? viewMode) {
-    _prefs.then((SharedPreferences sharedPreferences) {
-      viewMode = viewMode ?? ViewMode.cheapest;
-      sharedPreferences.setInt(CyprusFuelGuideApp.keySelectedViewMode, viewMode!.index);
-      setState(() => _viewMode = viewMode!);
+  late Brands _brands = Brands.empty();
+
+  _loadBrandsFromPrefs() {
+    // load selected brands
+    _prefs.then((SharedPreferences prefs) {
+      String? brandNamesRawJson = prefs.getString(
+          CyprusFuelGuideApp.keyBrandNamesRawJson);
+      setState(() {
+        _brands = brandNamesRawJson != null
+            ? Brands.fromJson(jsonDecode(brandNamesRawJson))
+            : Brands.empty();
+      });
     });
   }
 
@@ -187,8 +205,8 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
       int fuelTypeIndex = prefs.getInt(CyprusFuelGuideApp.keySelectedFuelType) ?? FuelType.petrol95.index;
       _fuelType = FuelType.values[fuelTypeIndex];
       // load saved view mode selection
-      int viewModeIndex = prefs.getInt(CyprusFuelGuideApp.keySelectedViewMode) ?? ViewMode.overview.index;
-      _viewMode = ViewMode.values[viewModeIndex];
+      // int viewModeIndex = prefs.getInt(CyprusFuelGuideApp.keySelectedViewMode) ?? ViewMode.overview.index;
+      // _viewMode = ViewMode.values[viewModeIndex];
       // load last synced value
       int lastSynced = prefs.getInt(CyprusFuelGuideApp.keyLastSynced) ?? 0;
       _lastSynced = lastSynced;
@@ -324,11 +342,12 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
               const Divider(),
               ListTile(
                 title: const Text('Filter brands'),
+                subtitle: Text('${_brands.numOfChecked()} brands checked (${_brands.numOfUnchecked()} unchecked)'),
                 dense: true,
                 leading: const Icon(Icons.filter_list_outlined, color: Colors.brown),
                 onTap: () {
                   _scaffoldKey.currentState!.closeDrawer();
-                  CyprusFuelGuideApp.router.navigateTo(context, '/filterBrands');
+                  CyprusFuelGuideApp.router.navigateTo(context, '/filterBrands').then((value) => _loadBrandsFromPrefs());
                 },
               ),
 

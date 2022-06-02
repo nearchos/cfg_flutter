@@ -80,26 +80,28 @@ class Util {
   }
 
   static Widget imageForBrand(String brand) {
-    if("AGIP" == brand) {
+    if('AGIP' == brand) {
       return Image.asset('images/agip.png');
-    } else if("EKO" == brand) {
+    } else if('EKO' == brand) {
       return Image.asset('images/eko.png');
-    } else if("ENI" == brand) {
+    } else if('ENI' == brand) {
       return Image.asset('images/eni.png');
-    } else if("ESSO" == brand) {
+    } else if('ESSO' == brand) {
       return Image.asset('images/esso.png');
-    } else if("FILL_N_GO" == brand) {
+    } else if('FILL_N_GO' == brand || 'FILL-N-GO' == brand) {
       return Image.asset('images/fill_n_go.png');
-    } else if("LUKOIL" == brand) {
+    } else if('LUKOIL' == brand) {
       return Image.asset('images/lukoil.png');
-    } else if("PETROLINA" == brand) {
+    } else if('PETROLINA' == brand) {
       return Image.asset('images/petrolina.png');
-    } else if("SHELL" == brand) {
+    } else if('SHELL' == brand) {
       return Image.asset('images/shell.png');
-    } else if("STAROIL" == brand) {
+    } else if('STAROIL' == brand) {
       return Image.asset('images/staroil.png');
-    } else if("TOTAL" == brand) {
+    } else if('TOTAL' == brand) {
       return Image.asset('images/total.png');
+    } else if('TOTAL_PLUS' == brand || 'TOTAL-PLUS' == brand) {
+      return Image.asset('images/total_plus.png');
     } else {
       return Image.asset('images/independent.png');
     }

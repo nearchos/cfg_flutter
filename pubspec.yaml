@@ -102,6 +102,7 @@ flutter:
     - images/shell.png
     - images/staroil.png
     - images/total.png
+    - images/total_plus.png
 
   fonts:
     - family: RobotoMono
