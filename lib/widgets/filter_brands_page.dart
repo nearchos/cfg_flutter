@@ -85,10 +85,13 @@ class FilterBrandsState extends State<FilterBrandsPage> {
         ),
         body: Column(
           children: [
-            SizedBox(
-              height: 32,
-              child: Center(
-                  child: Text(label, style: const TextStyle(color: Colors.brown, fontWeight: FontWeight.bold))
+            Container(
+              color: Colors.grey[300],
+              child: SizedBox(
+                height: 32,
+                child: Center(
+                    child: Text(label, style: const TextStyle(color: Colors.brown, fontWeight: FontWeight.bold))
+                ),
               ),
             ),
             Expanded(child: _getBrandsListView())

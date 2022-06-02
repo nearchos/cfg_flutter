@@ -6,8 +6,9 @@ import 'package:cfg_flutter/model/fuel_type.dart';
 import 'package:cfg_flutter/util.dart';
 import 'package:cfg_flutter/view_mode.dart';
 import 'package:cfg_flutter/widgets/about.dart';
-import 'package:cfg_flutter/widgets/cfg_drawer_header.dart';
-import 'package:cfg_flutter/widgets/cfg_radio_list_tile.dart';
+import 'package:cfg_flutter/widgets/info_tile.dart';
+import 'package:cfg_flutter/widgets/short_drawer_header.dart';
+import 'package:cfg_flutter/widgets/dot_radio_list_tile.dart';
 import 'package:cfg_flutter/widgets/filter_brands_page.dart';
 import 'package:cfg_flutter/widgets/overview_page.dart';
 import 'package:cfg_flutter/widgets/privacy.dart';
@@ -48,7 +49,7 @@ class CyprusFuelGuideApp extends StatelessWidget {
     router.define("/stationsByPrice", handler: Handler(handlerFunc: (context, params) => const StationsPage(title: 'Stations by price', viewMode: ViewMode.cheapest)));
     router.define("/stationsByDistance", handler: Handler(handlerFunc: (context, params) => const StationsPage(title: 'Stations by distance', viewMode: ViewMode.nearest)));
     router.define("/favoriteStations", handler: Handler(handlerFunc: (context, params) => const StationsPage(title: 'Favorite stations', viewMode: ViewMode.favorites)));
-    router.define("/trends", handler: Handler(handlerFunc: (context, params) => const TrendsPage(title: 'Trends', viewMode: ViewMode.favorites)));
+    router.define("/trends", handler: Handler(handlerFunc: (context, params) => const TrendsPage(title: 'Trends')));
     router.define("/station/:code", handler: Handler(handlerFunc: (context, params) => StationPage(code: params['code']![0])));
     router.define("/filterBrands", handler: Handler(handlerFunc: (context, params) => const FilterBrandsPage(title: 'Filter brands')));
     router.define("/privacy", handler: Handler(handlerFunc: (context, params) => const PrivacyPage(title: 'Privacy')));
@@ -252,97 +253,48 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
             padding: EdgeInsets.zero, // remove any padding from the ListView.
             children: [
 
-              const CfgDrawerHeader(),
+              const ShortDrawerHeader(),
 
-              CfgRadioListTile<FuelType>(
+              DotRadioListTile<FuelType>(
                 value: FuelType.petrol95,
                 groupValue: _fuelType,
-                leading: 'P95',
-                dense: true,
                 title: 'Unleaded 95',
+                iconData: Icons.local_gas_station_outlined,
                 onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
               ),
-              CfgRadioListTile<FuelType>(
+              DotRadioListTile<FuelType>(
                 value: FuelType.petrol98,
                 groupValue: _fuelType,
-                leading: 'P98',
-                dense: true,
                 title: 'Unleaded 98',
+                iconData: Icons.local_gas_station_outlined,
                 onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
               ),
-              CfgRadioListTile<FuelType>(
+              DotRadioListTile<FuelType>(
                 value: FuelType.diesel,
                 groupValue: _fuelType,
-                leading: 'DIE',
-                dense: true,
                 title: 'Diesel',
+                iconData: Icons.local_gas_station_outlined,
                 onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
               ),
-              CfgRadioListTile<FuelType>(
+              DotRadioListTile<FuelType>(
                 value: FuelType.heating,
                 groupValue: _fuelType,
-                leading: 'HEA',
-                dense: true,
                 title: 'Heating',
+                iconData: Icons.local_gas_station_outlined,
                 onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
               ),
-              CfgRadioListTile<FuelType>(
+              DotRadioListTile<FuelType>(
                 value: FuelType.kerosene,
                 groupValue: _fuelType,
-                leading: 'KER',
-                dense: true,
                 title: 'Kerosene',
+                iconData: Icons.local_gas_station_outlined,
                 onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
               ),
 
-              // const Divider(),
-              //
-              // CfgRadioListTile<ViewMode>(
-              //   value: ViewMode.overview,
-              //   groupValue: _viewMode,
-              //   icon: const Icon(Icons.local_gas_station_outlined, color: Colors.brown,),
-              //   dense: true,
-              //   title: 'Overview',
-              //   onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
-              // ),
-              // CfgRadioListTile<ViewMode>(
-              //   value: ViewMode.cheapest,
-              //   groupValue: _viewMode,
-              //   icon: const Icon(Icons.euro, color: Colors.brown,),
-              //   dense: true,
-              //   title: 'Cheapest',
-              //   onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
-              // ),
-              // CfgRadioListTile<ViewMode>(
-              //   value: ViewMode.nearest,
-              //   groupValue: _viewMode,
-              //   icon: const Icon(Icons.near_me_outlined, color: Colors.brown,),
-              //   dense: true,
-              //   title: 'Nearest',
-              //   onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
-              // ),
-              // CfgRadioListTile<ViewMode>(
-              //   value: ViewMode.favorites,
-              //   groupValue: _viewMode,
-              //   icon: const Icon(Icons.favorite_border_outlined, color: Colors.brown,),
-              //   dense: true,
-              //   title: 'Favorites',
-              //   onChanged: (ViewMode? viewMode) => _selectViewMode(viewMode),
-              // ),
-              // ListTile(
-              //   title: const Text('Trends'),
-              //   dense: true,
-              //   leading: const Icon(Icons.stacked_line_chart, color: Colors.brown),
-              //   onTap: () {
-              //     _scaffoldKey.currentState!.closeDrawer();
-              //     CyprusFuelGuideApp.router.navigateTo(context, '/trends');
-              //   },
-              // ),
-
-              const Divider(),
+              const Divider(color: Colors.brown),
               ListTile(
                 title: const Text('Filter brands'),
-                subtitle: Text('${_brands.numOfChecked()} brands checked (${_brands.numOfUnchecked()} unchecked)'),
+                subtitle: Text(_brands.numOfUnchecked() == 0 ? 'Viewing all brands' : 'Viewing ${_brands.numOfChecked()} brands (${_brands.numOfUnchecked()} hidden)'),
                 dense: true,
                 leading: const Icon(Icons.filter_list_outlined, color: Colors.brown),
                 onTap: () {
@@ -351,10 +303,10 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
                 },
               ),
 
-              const Divider(),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(72, 4, 8, 0),
-                child: Text('Data from the Ministry of Energy, Commerce, Industry, and Tourism', style: Theme.of(context).textTheme.bodySmall,),
+              const Divider(color: Colors.brown),
+              ListTile(
+                leading: const SizedBox(),
+                subtitle: Text('Data from the Ministry of Energy, Commerce, Industry, and Tourism', style: Theme.of(context).textTheme.bodySmall,),
               ),
               ListTile(
                 title: const Text('Synchronize'),
@@ -366,7 +318,7 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
                 },
               ),
 
-              const Divider(),
+              const Divider(color: Colors.brown),
               ListTile(
                 title: const Text('Privacy'),
                 dense: true,
@@ -393,7 +345,7 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
             : Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // InfoTileWidget(fuelType: _fuelType, viewMode: _viewMode),
+            InfoTileWidget(label: ' ⛽ Overview · ${Util.name(_fuelType)}'),
             Expanded(
                 child: Overview(syncResponse: _syncResponse)
             ),

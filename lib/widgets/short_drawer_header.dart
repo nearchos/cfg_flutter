@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class CfgDrawerHeader extends StatelessWidget {
-  const CfgDrawerHeader({Key? key}) : super(key: key);
+class ShortDrawerHeader extends StatelessWidget {
+  const ShortDrawerHeader({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

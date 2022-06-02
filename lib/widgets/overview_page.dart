@@ -97,7 +97,7 @@ class _OverviewState extends State<Overview> {
     int bestPrice = fuelTypeStatistics.maxPrice;
     for (final Price price in syncResponse.prices) {
       if(_favorites.contains(price.stationCode)) {
-        if(price.prices[_fuelType.index] < bestPrice) {
+        if(price.prices[_fuelType.index] < bestPrice && price.prices[_fuelType.index] > 0) {
           bestPrice = price.prices[_fuelType.index];
         }
       }

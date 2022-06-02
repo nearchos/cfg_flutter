@@ -77,6 +77,22 @@ class _StationsPageState extends State<StationsPage> {
 
   @override
   Widget build(BuildContext context) {
+    String label = ' ⛽ ';
+    switch(widget.viewMode) {
+      case ViewMode.overview: label += 'Overview'; break;
+      case ViewMode.cheapest: label += 'Cheapest'; break;
+      case ViewMode.nearest: label += 'Nearest'; break;
+      case ViewMode.favorites: label += 'Favorites'; break;
+    }
+    label += ' · ';
+    switch(_fuelType) {
+      case FuelType.petrol95: label += 'Unleaded Petrol 95'; break;
+      case FuelType.petrol98: label += 'Unleaded Petrol 98'; break;
+      case FuelType.diesel: label += 'Diesel'; break;
+      case FuelType.heating: label += 'Heating'; break;
+      case FuelType.kerosene: label += 'Kerosene'; break;
+    }
+
     return Scaffold(
         appBar: AppBar(
           title: Text(widget.title),
@@ -89,7 +105,7 @@ class _StationsPageState extends State<StationsPage> {
             :
         Column(
           children: [
-            InfoTileWidget(fuelType: _fuelType, viewMode: widget.viewMode),
+            InfoTileWidget(label: label),
             Expanded(child: _getStationsListView()),
           ],
         )
@@ -131,6 +147,8 @@ class _StationsPageState extends State<StationsPage> {
         Price? price2 = stationCodeToPrice[s2.code];
         int p1 = price1 != null ? price1.prices[_fuelType.index] : 0;
         int p2 = price2 != null ? price2.prices[_fuelType.index] : 0;
+        if(p1 == 0) return 1;
+        if(p2 == 0) return -1;
         return p1 - p2;
       });
     }
@@ -144,6 +162,7 @@ class _StationsPageState extends State<StationsPage> {
 
   ListTile _getStationListTile(BuildContext buildContext, Station station, Price price) {
     String d;
+    double p = price.prices[_fuelType.index] / 1000;
     if(_locationData == null) {
       d = '...';
     } else {
@@ -161,7 +180,7 @@ class _StationsPageState extends State<StationsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(d),
-          Text('€${(price.prices[_fuelType.index]/1000).toStringAsFixed(3)}'),
+          Text(p == 0 ? 'Not available' : '€${p.toStringAsFixed(3)}'),
           Text(station.address)
         ],
       ),

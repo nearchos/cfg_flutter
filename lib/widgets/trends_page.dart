@@ -4,15 +4,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import '../model/fuel_type.dart';
 import '../model/sync_response.dart';
-import '../view_mode.dart';
 import 'info_tile.dart';
 
 class TrendsPage extends StatefulWidget {
 
-  const TrendsPage({Key? key, required this.title, required this.viewMode}) : super(key: key);
+  const TrendsPage({Key? key, required this.title}) : super(key: key);
 
   final String title;
-  final ViewMode viewMode;
 
   @override
   State<TrendsPage> createState() => _TrendsPageState();
@@ -43,6 +41,14 @@ class _TrendsPageState extends State<TrendsPage> {
 
   @override
   Widget build(BuildContext context) {
+    String label = ' ⛽ Trends · ';
+    switch(_fuelType) {
+      case FuelType.petrol95: label += 'Unleaded Petrol 95'; break;
+      case FuelType.petrol98: label += 'Unleaded Petrol 98'; break;
+      case FuelType.diesel: label += 'Diesel'; break;
+      case FuelType.heating: label += 'Heating'; break;
+      case FuelType.kerosene: label += 'Kerosene'; break;
+    }
     return Scaffold(
         appBar: AppBar(
           title: Text(widget.title),
@@ -55,7 +61,7 @@ class _TrendsPageState extends State<TrendsPage> {
             :
         Column(
           children: [
-            InfoTileWidget(fuelType: _fuelType, viewMode: widget.viewMode),
+            InfoTileWidget(label: label),
             Expanded(child: Text('todo')),//todo
           ],
         )
