@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:cfg_flutter/widgets/info_tile.dart';
 import 'package:flutter/material.dart';
+import 'package:greek_tools/greek_tools.dart';
 import 'package:location/location.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -175,13 +176,13 @@ class _StationsPageState extends State<StationsPage> {
         checkColor: Colors.green,
         onChanged: (bool? value) => _updateFavorite(station.code),
       ),
-      title: Text(station.name),
+      title: Text(toGreeklish(station.name)),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(d),
           Text(p == 0 ? 'Not available' : '€${p.toStringAsFixed(3)}'),
-          Text(station.address)
+          Text(toGreeklish(station.address))
         ],
       ),
       trailing: Util.imageForBrand(station.brand),
