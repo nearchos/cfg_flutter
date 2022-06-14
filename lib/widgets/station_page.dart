@@ -73,6 +73,8 @@ class _StationPageState extends State<StationPage> {
   String _title = 'Station';
   bool _showInGreek = false;
 
+  LocationData? _locationData;//todo
+
   @override
   void setState(VoidCallback fn) {
     if(mounted) {
