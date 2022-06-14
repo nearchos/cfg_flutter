@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:cfg_flutter/widgets/distance_view.dart';
 import 'package:cfg_flutter/widgets/info_tile.dart';
+import 'package:cfg_flutter/widgets/price_view.dart';
 import 'package:flutter/material.dart';
 import 'package:greek_tools/greek_tools.dart';
 import 'package:location/location.dart';
@@ -162,28 +164,37 @@ class _StationsPageState extends State<StationsPage> {
   }
 
   ListTile _getStationListTile(BuildContext buildContext, Station station, Price price) {
-    String d;
+    double d;
     double p = price.prices[_fuelType.index] / 1000;
     if(_locationData == null) {
-      d = '...';
+      d = double.infinity;
     } else {
-      final double stationDistance = Util.calculateDistanceInMeters(_locationData!.latitude, _locationData!.longitude, station.lat, station.lng);
-      d = Util.formatDistance(stationDistance);
+      d = Util.calculateDistanceInMeters(_locationData!.latitude, _locationData!.longitude, station.lat, station.lng);
     }
     return ListTile(
       leading: Checkbox(
         value: _favorites.contains(station.code),
-        checkColor: Colors.green,
+        activeColor: Colors.green,
         onChanged: (bool? value) => _updateFavorite(station.code),
       ),
-      title: Text(toGreeklish(station.name)),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      title: Row(
         children: [
-          Text(d),
-          Text(p == 0 ? 'Not available' : '€${p.toStringAsFixed(3)}'),
-          Text(toGreeklish(station.address))
+          PriceView(price: p, basicFontSize: 20, color: Colors.black, fontWeight: FontWeight.bold),
+          const Padding(padding: EdgeInsets.all(4), child: Text('@', style: TextStyle(fontSize: 10, color: Colors.brown))),
+          Flexible(
+              child: Text(toGreeklish(station.name), style: const TextStyle(fontSize: 12, color: Colors.grey), overflow: TextOverflow.ellipsis))
         ],
+      ),
+      subtitle: Padding(
+          padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
+          child: Row(
+            children: [
+              DistanceView(distanceInMeters: d, fontSize: 16, color: Colors.brown, fontWeight: FontWeight.bold),
+              Flexible(
+                child: Text(' ~ ${toGreeklish(station.address)}', overflow: TextOverflow.ellipsis),
+              )
+            ],
+          )
       ),
       trailing: Util.imageForBrand(station.brand),
       onTap: () => CyprusFuelGuideApp.router.navigateTo(context, '/station/${station.code}'),

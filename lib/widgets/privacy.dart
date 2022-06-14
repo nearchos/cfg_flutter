@@ -82,7 +82,6 @@ class PrivacyPage extends StatelessWidget {
               Container(),
             ]
         ));
-
   }
 
   static const String privacyText = '''
@@ -96,8 +95,8 @@ For questions regarding privacy, you can contact us at hello@aspectsense.com.
   ''';
 
   static const String cookiesText = '''
-This web app does not use any third party cookies.
+This web app uses cookies for functionality purposes, like remembering your favorite stations.
 
-However the app uses third-party libraries, like Google Maps to display personalized maps, and Google Analytics to trace app usage, and AdMob to serve ads. These libraries might use their own cookies.
+This web app does not use any third party cookies. However the app uses third-party libraries, like Google Maps to display personalized maps, and Google Analytics to trace app usage, and AdMob to serve ads. These libraries might use their own cookies.
   ''';
 }

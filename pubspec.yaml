@@ -62,7 +62,16 @@ dependencies:
   location: ^4.3.0
 
   # https://pub.dev/packages/greek_tools
-  greek_tools: ^1.0.2
+  greek_tools: ^1.0.4
+
+  # https://pub.dev/packages/progress_indicators
+  progress_indicators: ^1.0.0
+
+  # https://pub.dev/packages/map_launcher
+  map_launcher: ^2.2.1+2
+
+  # https://pub.dev/packages/google_maps_flutter
+  google_maps_flutter: ^2.1.3
 
 dev_dependencies:
   flutter_test:

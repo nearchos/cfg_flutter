@@ -18,6 +18,7 @@ import 'package:cfg_flutter/widgets/syncing_progress_indicator.dart';
 import 'package:cfg_flutter/widgets/trends_page.dart';
 import 'package:fluro/fluro.dart';
 import 'package:flutter/foundation.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cfg_flutter/model/sync_response.dart';
 import 'package:flutter/material.dart';
@@ -56,14 +57,14 @@ class CyprusFuelGuideApp extends StatelessWidget {
     router.define("/about", handler: Handler(handlerFunc: (context, params) => const AboutPage(title: 'About')));
   }
 
-  static const String keyLastSynced = 'KEY_LAST_SYNCED';
-  static const String keyLastUpdateTimestamp = 'KEY_LAST_UPDATE_TIMESTAMP';
-  static const String keyNumOfStations = 'KEY_NUM_OF_STATIONS';
-  static const String keyLastRawJson = 'KEY_LAST_RAW_JSON';
-  static const String keyFavoriteStationCodesRawJson = 'KEY_FAVORITE_STATION_CODES_RAW_JSON';
-  static const String keyBrandNamesRawJson = 'KEY_BRAND_NAMES_RAW_JSON';
-  static const String keySelectedFuelType = 'KEY_SELECTED_FUEL_TYPE';
-  static const String keySelectedViewMode = 'KEY_SELECTED_VIEW_MODE';
+  static const String keyLastSynced = 'keyLastSynced';
+  static const String keyLastUpdateTimestamp = 'keyLastUpdateTimestamp';
+  static const String keyNumOfStations = 'keyNumOfStations';
+  static const String keyLastRawJson = 'keyLastRawJson';
+  static const String keyFavoriteStationCodesRawJson = 'keyFavoriteStationCodesRawJson';
+  static const String keyBrandNamesRawJson = 'keyBrandNamesRawJson';
+  static const String keySelectedFuelType = 'keySelectedFuelType';
+  static const String keyShowInGreek = 'keyShowInGreek';
 
   // This widget is the root of your application.
   @override
@@ -139,10 +140,12 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
 
         _syncResponse = syncResponse;
         int lastSynced = DateTime.now().millisecondsSinceEpoch;
-        _prefs.then((SharedPreferences sharedPreferences) => sharedPreferences.setInt(CyprusFuelGuideApp.keyLastSynced, lastSynced));
-        _prefs.then((SharedPreferences sharedPreferences) => sharedPreferences.setInt(CyprusFuelGuideApp.keyLastUpdateTimestamp, syncResponse.lastUpdated));
-        _prefs.then((SharedPreferences sharedPreferences) => sharedPreferences.setInt(CyprusFuelGuideApp.keyNumOfStations, syncResponse.stations.length));
-        _prefs.then((SharedPreferences sharedPreferences) => sharedPreferences.setString(CyprusFuelGuideApp.keyLastRawJson, rawJson));
+        _prefs.then((SharedPreferences sharedPreferences) {
+          sharedPreferences.setInt(CyprusFuelGuideApp.keyLastSynced, lastSynced);
+          sharedPreferences.setInt(CyprusFuelGuideApp.keyLastUpdateTimestamp, syncResponse.lastUpdated);
+          sharedPreferences.setInt(CyprusFuelGuideApp.keyNumOfStations, syncResponse.stations.length);
+          sharedPreferences.setString(CyprusFuelGuideApp.keyLastRawJson, rawJson);
+        });
 
         setState(() {
           _isSyncing = false;
@@ -172,16 +175,6 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
     });
   }
 
-  // late ViewMode _viewMode = ViewMode.overview;
-  //
-  // _selectViewMode(ViewMode? viewMode) {
-  //   _prefs.then((SharedPreferences sharedPreferences) {
-  //     viewMode = viewMode ?? ViewMode.cheapest;
-  //     sharedPreferences.setInt(CyprusFuelGuideApp.keySelectedViewMode, viewMode!.index);
-  //     setState(() => _viewMode = viewMode!);
-  //   });
-  // }
-
   late Brands _brands = Brands.empty();
 
   _loadBrandsFromPrefs() {
@@ -196,6 +189,8 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
       });
     });
   }
+
+  String _version = '...';
 
   @override
   void initState() {
@@ -227,6 +222,10 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
       }
       setState(() {}); // trigger a state update
     });
+
+    PackageInfo.fromPlatform().then((PackageInfo packageInfo) => setState(() {
+      _version = 'Version ${packageInfo.version}-${packageInfo.buildNumber}';
+    }));
   }
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -330,6 +329,7 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
               ),
               ListTile(
                 title: const Text('About'),
+                subtitle: Text(_version),
                 dense: true,
                 leading: const Icon(Icons.info_outline, color: Colors.brown),
                 onTap: () {

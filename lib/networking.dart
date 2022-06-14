@@ -2,13 +2,13 @@ import 'package:cfg_flutter/keys.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
 
-// const baseUrl = 'demogaej.appspot.com';
-const baseUrl = 'cyprusfuelguide.appspot.com';
+const baseUrl = 'demogaej.appspot.com';
+// const baseUrl = 'cyprusfuelguide.appspot.com';
 
 Future<String> sync({int from = 0}) async {
 
-  // Uri uri = Uri.https(baseUrl, 'cfg/sync', {'key': flutterMagic, 'from': '$from'});
-  Uri uri = Uri.https(baseUrl, 'api/sync', {'key': flutterMagic, 'from': '$from'});
+  Uri uri = Uri.https(baseUrl, 'cfg/sync', {'key': flutterMagic, 'from': '$from'});
+  // Uri uri = Uri.https(baseUrl, 'api/sync', {'key': flutterMagic, 'from': '$from'});
 
   final Response response = await http.get(uri);
 
