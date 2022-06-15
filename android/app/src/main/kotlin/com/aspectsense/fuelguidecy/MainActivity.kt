@@ -1,4 +1,4 @@
-package com.example.cfg_flutter
+package com.aspectsense.fuelguidecy
 
 import io.flutter.embedding.android.FlutterActivity
 

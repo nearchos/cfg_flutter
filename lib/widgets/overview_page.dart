@@ -8,9 +8,11 @@ import 'package:cfg_flutter/widgets/no_favorites_card.dart';
 import 'package:cfg_flutter/widgets/unknown_location_card.dart';
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import '../model/fuel_type.dart';
+import '../model/location_model.dart';
 import '../model/price.dart';
 import '../model/station.dart';
 import '../util.dart';
@@ -30,8 +32,8 @@ class _OverviewState extends State<Overview> {
 
   late FuelType _fuelType = FuelType.petrol95;
   late Favorites _favorites = Favorites.empty();
-  Location location = Location();
-  LocationData? _locationData;
+  // Location location = Location();
+  // LocationData? _locationData;
 
   @override
   void initState() {
@@ -39,9 +41,9 @@ class _OverviewState extends State<Overview> {
 
     _loadFromPreferences();
 
-    location.getLocation().then((LocationData locationData) {
-      setState(() => _locationData = locationData);
-    });
+    // location.getLocation().then((LocationData locationData) {
+    //   setState(() => _locationData = locationData);
+    // });
   }
 
   void _loadFromPreferences() {
@@ -64,10 +66,14 @@ class _OverviewState extends State<Overview> {
         ?
     const Text('No data')
         :
-    _getListView(widget.syncResponse!, _fuelType);
+    Consumer<LocationModel>(
+        builder: (context, locationModel, child) {
+          return _getListView(widget.syncResponse!, _fuelType, locationModel.locationData);
+        }
+    );
   }
 
-  Widget _getListView(SyncResponse syncResponse, FuelType fuelType) {
+  Widget _getListView(SyncResponse syncResponse, FuelType fuelType, LocationData? locationData) {
     FuelTypeStatistics fuelTypeStatistics = FuelTypeStatistics.from(syncResponse, fuelType);
     final int numOfStations = syncResponse.stations.length;
     final int minPrice = fuelTypeStatistics.minPrice;
@@ -81,9 +87,9 @@ class _OverviewState extends State<Overview> {
     Map<Station,double> stationsToDistance = {};
     double nearestStationDistance = double.maxFinite;
     int? nearestStationPrice = 0;
-    if(_locationData != null) {
-      double lat = _locationData!.latitude!;
-      double lng = _locationData!.longitude!;
+    if(locationData != null) {
+      double lat = locationData.latitude!;
+      double lng = locationData.longitude!;
       for (Station station in syncResponse.stations) {
         double stationDistance = Util.calculateDistanceInMeters(lat, lng, station.lat, station.lng);
         stationsToDistance[station] = stationDistance;
@@ -108,7 +114,7 @@ class _OverviewState extends State<Overview> {
         // best price cards
         _getCard(const Icon(Icons.euro_outlined, color: Colors.green), 'Best price €${(minPrice/1000).toStringAsFixed(3)} in $numOfStations stations', 'This is ${diff/10}¢ cheaper than the average, available in $numOfBestPriceStations station${numOfBestPriceStations > 1 ? "s" : ""}', _navToStationsByPrice),
         // check location
-        _locationData == null
+        locationData == null
             ?
         const UnknownLocationCard()
             :

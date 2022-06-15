@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:cfg_flutter/keys.dart';
 import 'package:cfg_flutter/model/brands.dart';
 import 'package:cfg_flutter/model/fuel_type.dart';
+import 'package:cfg_flutter/model/location_model.dart';
 import 'package:cfg_flutter/util.dart';
 import 'package:cfg_flutter/view_mode.dart';
 import 'package:cfg_flutter/widgets/about.dart';
@@ -12,17 +14,23 @@ import 'package:cfg_flutter/widgets/dot_radio_list_tile.dart';
 import 'package:cfg_flutter/widgets/filter_brands_page.dart';
 import 'package:cfg_flutter/widgets/overview_page.dart';
 import 'package:cfg_flutter/widgets/privacy.dart';
-import 'package:cfg_flutter/widgets/station_page.dart';
+// conditional import
+// https://dart.dev/guides/libraries/create-library-packages#conditionally-importing-and-exporting-library-files
+import 'package:cfg_flutter/widgets/station_page_none.dart' // default option
+  if (dart.library.io) 'package:cfg_flutter/widgets/station_page_native.dart' // native
+  if (dart.library.html) 'package:cfg_flutter/widgets/station_page_web.dart'; // web app
 import 'package:cfg_flutter/widgets/stations_page.dart';
 import 'package:cfg_flutter/widgets/syncing_progress_indicator.dart';
 import 'package:cfg_flutter/widgets/trends_page.dart';
 import 'package:fluro/fluro.dart';
 import 'package:flutter/foundation.dart';
+import 'package:location/location.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cfg_flutter/model/sync_response.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:provider/provider.dart';
 
 import 'dart:io';
 import 'networking.dart';
@@ -69,13 +77,16 @@ class CyprusFuelGuideApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Cyprus Fuel Guide',
-      theme: ThemeData(
-        primarySwatch: Colors.amber,
-      ),
-      initialRoute: '/',
-      onGenerateRoute: CyprusFuelGuideApp.router.generator,
+    return ChangeNotifierProvider(
+        create: (context) => LocationModel(),
+        child: MaterialApp(
+          title: 'Cyprus Fuel Guide',
+          theme: ThemeData(
+            primarySwatch: Colors.amber,
+          ),
+          initialRoute: '/',
+          onGenerateRoute: CyprusFuelGuideApp.router.generator,
+        )
     );
   }
 }
@@ -192,6 +203,8 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
 
   String _version = '...';
 
+  StreamSubscription<LocationData>? _locationStreamSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -226,6 +239,18 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
     PackageInfo.fromPlatform().then((PackageInfo packageInfo) => setState(() {
       _version = 'Version ${packageInfo.version}-${packageInfo.buildNumber}';
     }));
+
+    Util.requestLocation().then((Location location) {
+      _locationStreamSubscription = location.onLocationChanged.listen((LocationData currentLocationData) {
+        Provider.of<LocationModel>(context, listen: false).update(currentLocationData);
+      });
+    });
+  }
+
+  @override
+  void deactivate() {
+    _locationStreamSubscription?.cancel();
+    super.deactivate();
   }
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -238,130 +263,131 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
         _createAnchoredBanner(context);
       }
     }
+
     return MaterialApp(
-      theme: ThemeData(
-        primarySwatch: Colors.amber,
-      ),
-      home: Scaffold(
-        key: _scaffoldKey,
-        appBar: AppBar(
-          title: Text(widget.title),
+        theme: ThemeData(
+          primarySwatch: Colors.amber,
         ),
-        drawer: Drawer(
-          child: ListView(
-            padding: EdgeInsets.zero, // remove any padding from the ListView.
+        home: Scaffold(
+          key: _scaffoldKey,
+          appBar: AppBar(
+            title: Text(widget.title),
+          ),
+          drawer: Drawer(
+            child: ListView(
+              padding: EdgeInsets.zero, // remove any padding from the ListView.
+              children: [
+
+                const ShortDrawerHeader(),
+
+                DotRadioListTile<FuelType>(
+                  value: FuelType.petrol95,
+                  groupValue: _fuelType,
+                  title: 'Unleaded 95',
+                  iconData: Icons.local_gas_station_outlined,
+                  onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
+                ),
+                DotRadioListTile<FuelType>(
+                  value: FuelType.petrol98,
+                  groupValue: _fuelType,
+                  title: 'Unleaded 98',
+                  iconData: Icons.local_gas_station_outlined,
+                  onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
+                ),
+                DotRadioListTile<FuelType>(
+                  value: FuelType.diesel,
+                  groupValue: _fuelType,
+                  title: 'Diesel',
+                  iconData: Icons.local_gas_station_outlined,
+                  onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
+                ),
+                DotRadioListTile<FuelType>(
+                  value: FuelType.heating,
+                  groupValue: _fuelType,
+                  title: 'Heating',
+                  iconData: Icons.local_gas_station_outlined,
+                  onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
+                ),
+                DotRadioListTile<FuelType>(
+                  value: FuelType.kerosene,
+                  groupValue: _fuelType,
+                  title: 'Kerosene',
+                  iconData: Icons.local_gas_station_outlined,
+                  onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
+                ),
+
+                const Divider(color: Colors.brown),
+                ListTile(
+                  title: const Text('Filter brands'),
+                  subtitle: Text(_brands.numOfUnchecked() == 0 ? 'Viewing all brands' : 'Viewing ${_brands.numOfChecked()} brands (${_brands.numOfUnchecked()} hidden)'),
+                  dense: true,
+                  leading: const Icon(Icons.filter_list_outlined, color: Colors.brown),
+                  onTap: () {
+                    _scaffoldKey.currentState!.closeDrawer();
+                    CyprusFuelGuideApp.router.navigateTo(context, '/filterBrands').then((value) => _loadBrandsFromPrefs());
+                  },
+                ),
+
+                const Divider(color: Colors.brown),
+                ListTile(
+                  leading: const SizedBox(),
+                  subtitle: Text('Data from the Ministry of Energy, Commerce, Industry, and Tourism', style: Theme.of(context).textTheme.bodySmall,),
+                ),
+                ListTile(
+                  title: const Text('Synchronize'),
+                  subtitle: Text(_isSyncing ? 'Syncing ...' : _getSynchronizeSubtitle()),
+                  dense: true,
+                  leading: const Icon(Icons.sync, color: Colors.brown),
+                  onTap: () {
+                    _isSyncing || (DateTime.now().millisecondsSinceEpoch - _lastSynced < Util.oneMinuteInMilliseconds) ? null : _synchronize();
+                  },
+                ),
+
+                const Divider(color: Colors.brown),
+                ListTile(
+                  title: const Text('Privacy'),
+                  dense: true,
+                  leading: const Icon(Icons.privacy_tip_outlined, color: Colors.brown),
+                  onTap: () {
+                    _scaffoldKey.currentState!.closeDrawer();
+                    CyprusFuelGuideApp.router.navigateTo(context, '/privacy');
+                  },
+                ),
+                ListTile(
+                  title: const Text('About'),
+                  subtitle: Text(_version),
+                  dense: true,
+                  leading: const Icon(Icons.info_outline, color: Colors.brown),
+                  onTap: () {
+                    _scaffoldKey.currentState!.closeDrawer();
+                    CyprusFuelGuideApp.router.navigateTo(context, '/about');
+                  },
+                ),
+              ],
+            ),
+          ),
+          body: _isSyncing
+              ? const SyncingProgressIndicator()
+              : Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-
-              const ShortDrawerHeader(),
-
-              DotRadioListTile<FuelType>(
-                value: FuelType.petrol95,
-                groupValue: _fuelType,
-                title: 'Unleaded 95',
-                iconData: Icons.local_gas_station_outlined,
-                onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
+              InfoTileWidget(label: ' ⛽ Overview · ${Util.name(_fuelType)}'),
+              Expanded(
+                  child: Overview(syncResponse: _syncResponse)
               ),
-              DotRadioListTile<FuelType>(
-                value: FuelType.petrol98,
-                groupValue: _fuelType,
-                title: 'Unleaded 98',
-                iconData: Icons.local_gas_station_outlined,
-                onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
-              ),
-              DotRadioListTile<FuelType>(
-                value: FuelType.diesel,
-                groupValue: _fuelType,
-                title: 'Diesel',
-                iconData: Icons.local_gas_station_outlined,
-                onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
-              ),
-              DotRadioListTile<FuelType>(
-                value: FuelType.heating,
-                groupValue: _fuelType,
-                title: 'Heating',
-                iconData: Icons.local_gas_station_outlined,
-                onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
-              ),
-              DotRadioListTile<FuelType>(
-                value: FuelType.kerosene,
-                groupValue: _fuelType,
-                title: 'Kerosene',
-                iconData: Icons.local_gas_station_outlined,
-                onChanged: (FuelType? fuelType) => _selectFuelType(fuelType),
-              ),
-
-              const Divider(color: Colors.brown),
-              ListTile(
-                title: const Text('Filter brands'),
-                subtitle: Text(_brands.numOfUnchecked() == 0 ? 'Viewing all brands' : 'Viewing ${_brands.numOfChecked()} brands (${_brands.numOfUnchecked()} hidden)'),
-                dense: true,
-                leading: const Icon(Icons.filter_list_outlined, color: Colors.brown),
-                onTap: () {
-                  _scaffoldKey.currentState!.closeDrawer();
-                  CyprusFuelGuideApp.router.navigateTo(context, '/filterBrands').then((value) => _loadBrandsFromPrefs());
-                },
-              ),
-
-              const Divider(color: Colors.brown),
-              ListTile(
-                leading: const SizedBox(),
-                subtitle: Text('Data from the Ministry of Energy, Commerce, Industry, and Tourism', style: Theme.of(context).textTheme.bodySmall,),
-              ),
-              ListTile(
-                title: const Text('Synchronize'),
-                subtitle: Text(_isSyncing ? 'Syncing ...' : _getSynchronizeSubtitle()),
-                dense: true,
-                leading: const Icon(Icons.sync, color: Colors.brown),
-                onTap: () {
-                  _isSyncing || (DateTime.now().millisecondsSinceEpoch - _lastSynced < Util.oneMinuteInMilliseconds) ? null : _synchronize();
-                },
-              ),
-
-              const Divider(color: Colors.brown),
-              ListTile(
-                title: const Text('Privacy'),
-                dense: true,
-                leading: const Icon(Icons.privacy_tip_outlined, color: Colors.brown),
-                onTap: () {
-                  _scaffoldKey.currentState!.closeDrawer();
-                  CyprusFuelGuideApp.router.navigateTo(context, '/privacy');
-                },
-              ),
-              ListTile(
-                title: const Text('About'),
-                subtitle: Text(_version),
-                dense: true,
-                leading: const Icon(Icons.info_outline, color: Colors.brown),
-                onTap: () {
-                  _scaffoldKey.currentState!.closeDrawer();
-                  CyprusFuelGuideApp.router.navigateTo(context, '/about');
-                },
-              ),
+              kIsWeb || _anchoredBanner == null
+                  ? Container() // empty if no ads
+                  :
+              Container(
+                color: Colors.amber,
+                alignment: Alignment.center,
+                width: _anchoredBanner!.size.width.toDouble(),
+                height: _anchoredBanner!.size.height.toDouble(),
+                child: AdWidget(ad: _anchoredBanner!),
+              ) // shows ads only on Web
             ],
           ),
-        ),
-        body: _isSyncing
-            ? const SyncingProgressIndicator()
-            : Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            InfoTileWidget(label: ' ⛽ Overview · ${Util.name(_fuelType)}'),
-            Expanded(
-                child: Overview(syncResponse: _syncResponse)
-            ),
-            kIsWeb || _anchoredBanner == null
-                ? Container() // empty if no ads
-                :
-            Container(
-              color: Colors.amber,
-              alignment: Alignment.center,
-              width: _anchoredBanner!.size.width.toDouble(),
-              height: _anchoredBanner!.size.height.toDouble(),
-              child: AdWidget(ad: _anchoredBanner!),
-            ) // shows ads only on Web
-          ],
-        ),
-      ),
+        )
     );
   }
 
@@ -381,5 +407,4 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
       }
     }
   }
-
 }

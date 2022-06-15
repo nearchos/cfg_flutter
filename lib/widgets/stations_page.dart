@@ -7,11 +7,13 @@ import 'package:cfg_flutter/widgets/price_view.dart';
 import 'package:flutter/material.dart';
 import 'package:greek_tools/greek_tools.dart';
 import 'package:location/location.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../main.dart';
 import '../model/favorites.dart';
 import '../model/fuel_type.dart';
+import '../model/location_model.dart';
 import '../model/price.dart';
 import '../model/station.dart';
 import '../model/sync_response.dart';
@@ -35,8 +37,6 @@ class _StationsPageState extends State<StationsPage> {
   late FuelType _fuelType = FuelType.petrol95;
   late Favorites _favorites = Favorites.empty();
   SyncResponse? _syncResponse;
-  StreamSubscription<LocationData>? _locationStreamSubscription;
-  LocationData? _locationData;
   bool showZeros = false;
 
   @override
@@ -57,18 +57,6 @@ class _StationsPageState extends State<StationsPage> {
         _syncResponse = SyncResponse.fromRawJson(lastRawJson!);
       });
     });
-
-    Util.requestLocation().then((Location location) {
-      _locationStreamSubscription = location.onLocationChanged.listen((LocationData currentLocationData) {
-        setState(() => _locationData = currentLocationData);
-      });
-    });
-  }
-
-  @override
-  void deactivate() {
-    _locationStreamSubscription?.cancel();
-    super.deactivate();
   }
 
   void _saveFavorites() {
@@ -109,13 +97,17 @@ class _StationsPageState extends State<StationsPage> {
         Column(
           children: [
             InfoTileWidget(label: label),
-            Expanded(child: _getStationsListView()),
+            Expanded(child: Consumer<LocationModel>(
+                builder: (context, locationModel, child) {
+                  return _getStationsListView(locationModel.locationData);
+                }
+            )),
           ],
         )
     );
   }
 
-  ListView _getStationsListView() {
+  ListView _getStationsListView(LocationData? locationData) {
 
     final Map<String,Price> stationCodeToPrice = {};
     for(final Price price in _syncResponse!.prices) {
@@ -136,9 +128,9 @@ class _StationsPageState extends State<StationsPage> {
       }
     }
     // sort by price or distance
-    if(widget.viewMode == ViewMode.nearest && _locationData != null) { // sort by distance
-      double lat = _locationData!.latitude!;
-      double lng = _locationData!.longitude!;
+    if(widget.viewMode == ViewMode.nearest && locationData != null) { // sort by distance
+      double lat = locationData.latitude!;
+      double lng = locationData.longitude!;
       selectedStations.sort((s1, s2) {
         double d1 = Util.calculateDistanceInMeters(lat, lng, s1.lat, s1.lng);
         double d2 = Util.calculateDistanceInMeters(lat, lng, s2.lat, s2.lng);
@@ -158,18 +150,18 @@ class _StationsPageState extends State<StationsPage> {
 
     return ListView.separated(
       itemCount: selectedStations.length,
-      itemBuilder: (context, index) => _getStationListTile(context, selectedStations[index], stationCodeToPrice[selectedStations[index].code]!),
+      itemBuilder: (context, index) => _getStationListTile(context, selectedStations[index], stationCodeToPrice[selectedStations[index].code]!, locationData),
       separatorBuilder: (context, index) => const Divider(color: Colors.brown),
     );
   }
 
-  ListTile _getStationListTile(BuildContext buildContext, Station station, Price price) {
+  ListTile _getStationListTile(BuildContext buildContext, Station station, Price price, LocationData? locationData) {
     double d;
     double p = price.prices[_fuelType.index] / 1000;
-    if(_locationData == null) {
+    if(locationData == null) {
       d = double.infinity;
     } else {
-      d = Util.calculateDistanceInMeters(_locationData!.latitude, _locationData!.longitude, station.lat, station.lng);
+      d = Util.calculateDistanceInMeters(locationData.latitude, locationData.longitude, station.lat, station.lng);
     }
     return ListTile(
       leading: Checkbox(

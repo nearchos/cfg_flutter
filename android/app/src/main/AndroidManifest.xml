@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.cfg_flutter">
+    package="com.aspectsense.fuelguidecy">
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
     <application
@@ -9,6 +9,8 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-5900938723061190~4837913867" />
+        <meta-data android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyB-DOzkqmDNghFozM9ZS-yjayduvl3vz0A"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"

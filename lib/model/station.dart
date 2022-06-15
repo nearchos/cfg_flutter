@@ -41,6 +41,9 @@ class Station {
     };
   }
 
+  String get fullAddress => '$address, $district, $city';
+  String get coordinates => '$lat,$lng';
+
   @override
   String toString() {
     return "code: $code, brand: $brand, name: $name, telNo: $telNo, address: $address, district: $district, city: $city @ ($lat,$lng)";
