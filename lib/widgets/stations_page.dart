@@ -1,15 +1,18 @@
 import 'dart:async';
+import 'dart:io' as io;
 import 'dart:convert';
 
 import 'package:cfg_flutter/widgets/distance_view.dart';
 import 'package:cfg_flutter/widgets/info_tile.dart';
 import 'package:cfg_flutter/widgets/price_view.dart';
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:greek_tools/greek_tools.dart';
 import 'package:location/location.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../keys.dart';
 import '../main.dart';
 import '../model/favorites.dart';
 import '../model/fuel_type.dart';
@@ -31,6 +34,39 @@ class StationsPage extends StatefulWidget {
 }
 
 class _StationsPageState extends State<StationsPage> {
+
+  Future<void> _createAnchoredBanner(BuildContext context) async {
+    final AnchoredAdaptiveBannerAdSize? size = await AdSize.getAnchoredAdaptiveBannerAdSize(
+      Orientation.portrait,
+      MediaQuery.of(context).size.width.truncate(),
+    );
+
+    if (size == null) {
+      // print('Unable to get height of anchored banner.');
+      return;
+    }
+
+    final BannerAd banner = BannerAd(
+      size: size,
+      request: const AdRequest(),
+      adUnitId: io.Platform.isAndroid ? adUnitIdAndroid : adUnitIdIOS,
+      listener: BannerAdListener(
+        onAdLoaded: (Ad ad) {
+          // print('$BannerAd loaded.');
+          setState(() {
+            _anchoredBanner = ad as BannerAd?;
+          });
+        },
+        onAdFailedToLoad: (Ad ad, LoadAdError error) {
+          ad.dispose();
+        },
+      ),
+    );
+    return banner.load();
+  }
+
+  BannerAd? _anchoredBanner;
+  bool _loadingAnchoredBanner = false;
 
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
 
@@ -68,6 +104,11 @@ class _StationsPageState extends State<StationsPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_loadingAnchoredBanner) {
+      _loadingAnchoredBanner = true;
+    }
+    _createAnchoredBanner(context);
+
     String label = ' ⛽ ';
     switch(widget.viewMode) {
       case ViewMode.overview: label += 'Overview'; break;
@@ -90,18 +131,37 @@ class _StationsPageState extends State<StationsPage> {
           leading: IconButton(icon: const Icon(Icons.arrow_back),
               onPressed: () => Navigator.of(context).pop(false)),
         ),
-        body: _syncResponse == null
-            ?
-        const Center(child: Text('No data'))
-            :
-        Column(
+        body: Column(
           children: [
-            InfoTileWidget(label: label),
-            Expanded(child: Consumer<LocationModel>(
-                builder: (context, locationModel, child) {
-                  return _getStationsListView(locationModel.locationData);
-                }
-            )),
+            Expanded(
+                child: _syncResponse == null
+                    ?
+                const Center(child: Text('No data'))
+                    :
+                Column(
+                  children: [
+                    InfoTileWidget(label: label),
+                    Expanded(child: Consumer<LocationModel>(
+                        builder: (context, locationModel, child) {
+                          return _getStationsListView(locationModel.locationData);
+                        }
+                    )),
+                  ],
+                )
+            ),
+
+            // show ad banner
+            _anchoredBanner == null
+                ?
+            Container() // empty if no ads
+                :
+            Container(
+              color: Colors.amber,
+              alignment: Alignment.center,
+              width: _anchoredBanner!.size.width.toDouble(),
+              height: _anchoredBanner!.size.height.toDouble(),
+              child: AdWidget(ad: _anchoredBanner!),
+            ) // shows ads only on Web
           ],
         )
     );

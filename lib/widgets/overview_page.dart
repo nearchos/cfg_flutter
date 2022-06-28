@@ -112,7 +112,7 @@ class _OverviewState extends State<Overview> {
     return ListView(
       children: [
         // best price cards
-        _getCard(const Icon(Icons.euro_outlined, color: Colors.green), 'Best price €${(minPrice/1000).toStringAsFixed(3)} in $numOfStations stations', 'This is ${diff/10}¢ cheaper than the average, available in $numOfBestPriceStations station${numOfBestPriceStations > 1 ? "s" : ""}', _navToStationsByPrice),
+        _getCard(const Icon(Icons.euro_outlined, color: Colors.green), 'Lowest price €${(minPrice/1000).toStringAsFixed(3)} in $numOfStations stations', 'This is ${diff/10}¢ cheaper than the average, available in $numOfBestPriceStations station${numOfBestPriceStations > 1 ? "s" : ""}', _navToStationsByPrice),
         // check location
         locationData == null
             ?
@@ -124,9 +124,9 @@ class _OverviewState extends State<Overview> {
             ?
         const NoFavoritesCard()
             :
-        _getCard(const Icon(Icons.check_box_outlined, color: Colors.green), 'Best price €${(bestPrice/1000).toStringAsFixed(3)} in favorites', 'Comparing prices from ${_favorites.length()} favorite${_favorites.length() > 2 ? 's' : ''}', _navToFavoriteStations),
+        _getCard(const Icon(Icons.check_box_outlined, color: Colors.green), 'Best price €${(bestPrice/1000).toStringAsFixed(3)} in favorites', 'Comparing prices from ${_favorites.length()} favorite${_favorites.length() > 1 ? 's' : ''}', _navToFavoriteStations),
         // stats
-        _getCard(const Icon(Icons.stacked_line_chart_outlined, color: Colors.green), 'Trends', 'Trends in prices', _navToTrendsPage),
+        // _getCard(const Icon(Icons.stacked_line_chart_outlined, color: Colors.green), 'Trends', 'Trends in prices', _navToTrendsPage),
       ],
     );
   }
