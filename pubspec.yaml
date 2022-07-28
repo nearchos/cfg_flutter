@@ -82,6 +82,9 @@ dependencies:
   # https://pub.dev/packages/universal_html
   universal_html: ^2.0.8
 
+  # https://pub.dev/packages/collection
+  collection: ^1.16.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

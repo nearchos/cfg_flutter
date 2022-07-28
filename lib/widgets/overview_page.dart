@@ -32,18 +32,12 @@ class _OverviewState extends State<Overview> {
 
   late FuelType _fuelType = FuelType.petrol95;
   late Favorites _favorites = Favorites.empty();
-  // Location location = Location();
-  // LocationData? _locationData;
 
   @override
   void initState() {
     super.initState();
 
     _loadFromPreferences();
-
-    // location.getLocation().then((LocationData locationData) {
-    //   setState(() => _locationData = locationData);
-    // });
   }
 
   void _loadFromPreferences() {
@@ -126,7 +120,7 @@ class _OverviewState extends State<Overview> {
             :
         _getCard(const Icon(Icons.check_box_outlined, color: Colors.green), 'Best price €${(bestPrice/1000).toStringAsFixed(3)} in favorites', 'Comparing prices from ${_favorites.length()} favorite${_favorites.length() > 1 ? 's' : ''}', _navToFavoriteStations),
         // stats
-        // _getCard(const Icon(Icons.stacked_line_chart_outlined, color: Colors.green), 'Trends', 'Trends in prices', _navToTrendsPage),
+        _getCard(const Icon(Icons.stacked_line_chart_outlined, color: Colors.green), 'Analytics', 'Analytics for fuel prices', _navToTrendsPage),
       ],
     );
   }
@@ -176,6 +170,6 @@ class _OverviewState extends State<Overview> {
   }
 
   void _navToTrendsPage() async {
-    CyprusFuelGuideApp.router.navigateTo(context, '/trends');
+    CyprusFuelGuideApp.router.navigateTo(context, '/analytics');
   }
 }

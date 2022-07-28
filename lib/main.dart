@@ -21,7 +21,7 @@ import 'package:cfg_flutter/widgets/station_page_none.dart' // default option
   if (dart.library.html) 'package:cfg_flutter/widgets/station_page_web.dart'; // web app
 import 'package:cfg_flutter/widgets/stations_page.dart';
 import 'package:cfg_flutter/widgets/syncing_progress_indicator.dart';
-import 'package:cfg_flutter/widgets/trends_page.dart';
+import 'package:cfg_flutter/widgets/analytics_page.dart';
 import 'package:fluro/fluro.dart';
 import 'package:flutter/foundation.dart';
 import 'package:location/location.dart';
@@ -58,7 +58,7 @@ class CyprusFuelGuideApp extends StatelessWidget {
     router.define("/stationsByPrice", handler: Handler(handlerFunc: (context, params) => const StationsPage(title: 'Stations by price', viewMode: ViewMode.cheapest)));
     router.define("/stationsByDistance", handler: Handler(handlerFunc: (context, params) => const StationsPage(title: 'Stations by distance', viewMode: ViewMode.nearest)));
     router.define("/favoriteStations", handler: Handler(handlerFunc: (context, params) => const StationsPage(title: 'Favorite stations', viewMode: ViewMode.favorites)));
-    router.define("/trends", handler: Handler(handlerFunc: (context, params) => const TrendsPage(title: 'Trends')));
+    router.define("/analytics", handler: Handler(handlerFunc: (context, params) => const AnalyticsPage(title: 'Analytics')));
     router.define("/station/:code", handler: Handler(handlerFunc: (context, params) => StationPage(code: params['code']![0])));
     router.define("/filterBrands", handler: Handler(handlerFunc: (context, params) => const FilterBrandsPage(title: 'Filter brands')));
     router.define("/privacy", handler: Handler(handlerFunc: (context, params) => const PrivacyPage(title: 'Privacy')));
