@@ -151,7 +151,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     List<String> cities = citiesToCountsOfStations.keys.toList();
     cities.sort((city1, city2) => citiesToCountsOfStations[city2]! - citiesToCountsOfStations[city1]!);
     List<Widget> cards = cities
-        .map((city) => getFrequencyChart(city, citiesToCountsOfStations, citiesToPriceCounts[city]!))
+        .map((city) => getFrequencyChart(city, citiesToCountsOfStations, citiesToPriceCounts[city]!, citiesToMinPrice[country]!, citiesToMaxPrice[country]!))
         .toList();
 
     return Scaffold(
@@ -193,7 +193,21 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     );
   }
 
-  Widget getFrequencyChart(String city, Map<String,int> citiesToCountsOfStations, Map<int,int> priceCounts) {
+  Widget getFrequencyChart(String city, Map<String,int> citiesToCountsOfStations, Map<int,int> priceCounts, int absMin, int absMax) {
+    List<int> keys = priceCounts.keys.toList();
+    keys.sort();
+    List<int> allPrices = [];
+    for(int key in keys) {
+      int numOfStationsWithPrice = priceCounts[key]!;
+      for(int i = 0; i < numOfStationsWithPrice; i++) {
+        allPrices.add(key);
+      }
+    }
+    int min = allPrices.first;
+    int max = allPrices.last;
+    int quartileStart = allPrices[allPrices.length ~/ 4];
+    int quartileEnd = allPrices[3 * allPrices.length ~/ 4];
+    int median = allPrices.median();
     return Padding(
         padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
         child: Card(
@@ -205,23 +219,29 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text('${toGreeklish(city.capitalize())} (${citiesToCountsOfStations[city]} fuel stations)'),
+                      Text(toGreeklish(city.capitalize())),
                       const SizedBox(height: 8),
                       DecoratedBox(
                         decoration: const ShapeDecoration(
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(4)))),
                         child: SizedBox(
                             height: 100,
-                            child: CustomPaint(painter: BarsPainter(values: priceCounts))),
+                            child: CustomPaint(painter: BarsPainter(values: priceCounts, absMin: absMin, absMax: absMax))),
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      ExpansionTile(
+                        tilePadding: EdgeInsets.zero,
+                        childrenPadding: EdgeInsets.zero,
+                        title: const Text('Details', style: TextStyle(fontSize: 12, color: Colors.black87)),
+                        expandedCrossAxisAlignment: CrossAxisAlignment.start,
+                        expandedAlignment: Alignment.centerLeft,
                         children: [
-                          Text('lowest', style: TextStyle(color: Colors.green, fontSize: widget.fontSize)),
-                          Text(' · ', style: TextStyle(color: Colors.black, fontSize: widget.fontSize)),
-                          Text('median', style: TextStyle(color: Colors.purple, fontSize: widget.fontSize)),
-                          Text(' · ', style: TextStyle(color: Colors.black, fontSize: widget.fontSize)),
-                          Text('highest', style: TextStyle(color: Colors.red, fontSize: widget.fontSize)),
+                          Text('num of stations: ${citiesToCountsOfStations[city]}', style: TextStyle(color: Colors.black, fontSize: widget.fontSize)),
+                          Text('lowest price: €${keys.first/1000}', style: TextStyle(color: Colors.green, fontSize: widget.fontSize)),
+                          Text('1st quartile: €${quartileStart/1000}', style: TextStyle(color: Colors.black54, fontSize: widget.fontSize)),
+                          Text('median price: €${median/1000}', style: TextStyle(color: Colors.purple, fontSize: widget.fontSize)),
+                          Text('3rd quartile: €${quartileEnd/1000}', style: TextStyle(color: Colors.black54, fontSize: widget.fontSize)),
+                          Text('highest price: €${keys.last/1000}', style: TextStyle(color: Colors.red, fontSize: widget.fontSize)),
+                          const SizedBox(height: 10),
                         ],
                       )
                     ],

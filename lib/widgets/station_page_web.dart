@@ -20,6 +20,7 @@ import '../model/location_model.dart';
 import '../model/price.dart';
 import '../model/station.dart';
 import '../util.dart';
+import 'bars_painter.dart';
 
 class StationPage extends StatefulWidget {
   const StationPage({Key? key, required this.code}) : super(key: key);
@@ -38,6 +39,7 @@ class _StationPageState extends State<StationPage> {
   Station? _station;
   Price? _price;
   FuelType _fuelType = FuelType.petrol95;
+  int _fuelTypeIndex = 0;
   String _title = 'Station';
   bool _showInGreek = false;
 
@@ -48,6 +50,9 @@ class _StationPageState extends State<StationPage> {
     }
   }
 
+  late List<Station> _stations;
+  late List<Price> _prices;
+
   @override
   void initState() {
     super.initState();
@@ -55,16 +60,16 @@ class _StationPageState extends State<StationPage> {
     _prefs.then((SharedPreferences prefs) {
       final String? lastRawJson = prefs.getString(CyprusFuelGuideApp.keyLastRawJson);
       final SyncResponse syncResponse = SyncResponse.fromRawJson(lastRawJson!);
-      List<Station> stations = syncResponse.stations;
-      List<Price> prices = syncResponse.prices;
-      int fuelTypeIndex = prefs.getInt(CyprusFuelGuideApp.keySelectedFuelType) ?? FuelType.petrol95.index;
+      _stations = syncResponse.stations;
+      _prices = syncResponse.prices;
+      _fuelTypeIndex = prefs.getInt(CyprusFuelGuideApp.keySelectedFuelType) ?? FuelType.petrol95.index;
       bool showInGreek = prefs.getBool(CyprusFuelGuideApp.keyShowInGreek) ?? false;
 
       setState(() {
-        _station = stations.firstWhere((s) => s.code == widget.code);
-        _price = prices.firstWhere((p) => p.stationCode == widget.code);
+        _station = _stations.firstWhere((s) => s.code == widget.code);
+        _price = _prices.firstWhere((p) => p.stationCode == widget.code);
         _title = _station!.name;
-        _fuelType = FuelType.values[fuelTypeIndex];
+        _fuelType = FuelType.values[_fuelTypeIndex];
         _showInGreek = showInGreek;
       });
     });
@@ -87,6 +92,40 @@ class _StationPageState extends State<StationPage> {
   }
 
   Widget _getStationView() {
+
+    Map<int,int> priceCounts = {};
+    for (Price price in _prices) {
+      int p = price.prices[_fuelTypeIndex];
+      if(p == 0) continue; // ignore zeros for price - they usually mean the station doesn't have that fuel type
+      if(!priceCounts.containsKey(p)) {
+        priceCounts[p] = 0;
+      }
+      priceCounts[p] = priceCounts[p]! + 1;
+    }
+    List<int> prices = priceCounts.keys.toList();
+    prices.sort();
+    int absMin = prices.first;
+    int absMax = prices.last;
+
+    int price = _price!.prices[_fuelTypeIndex];
+    int cheaperThan = 0;
+    int rank = 1;
+    for(int p in prices) {
+      if(price < p) {
+        cheaperThan += priceCounts[p]!;
+      } else if(price > p) {
+        rank += priceCounts[p]!;
+      }
+    }
+    String message;
+    if(price == absMin) {
+      message = 'This station is ranked #$rank and is among the cheapest in Cyprus. It is ${(absMax - absMin) / 10}¢ cheaper than the most expensive station.';
+    } else if(price == absMax) {
+      message = 'This station is ranked #$rank and is one of the most expensive in Cyprus. It is ${(absMax - absMin) / 10}¢ more expensive than the cheapest station.';
+    } else {
+      message = 'This station is ranked #$rank and is cheaper than $cheaperThan stations. It is ${(price - absMin) / 10}¢ more expensive than the cheapest.';
+    }
+
     String htmlId = "myMapId";
 
     // ignore: undefined_prefixed_name
@@ -130,6 +169,27 @@ class _StationPageState extends State<StationPage> {
                   _getFuelBox(FuelType.heating, _price!.prices[FuelType.heating.index], _fuelType==FuelType.heating),
                   _getFuelBox(FuelType.kerosene, _price!.prices[FuelType.kerosene.index], _fuelType==FuelType.kerosene),
                 ],
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Colors.amberAccent,
+                    width: 2,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(
+                      height: 100,
+                      child: CustomPaint(painter: BarsPainter(values: priceCounts, absMin: absMin, absMax: absMax, selectedStationPrice: _price!.prices[_fuelTypeIndex])),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Text(message, style: const TextStyle(fontSize: 12, color: Colors.black87)),
+                    ),
+                  ],
+                ),
               ),
               Container(height: 1, color: Colors.brown),
               Expanded(

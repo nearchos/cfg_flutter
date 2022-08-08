@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:cfg_flutter/widgets/distance_view.dart';
 import 'package:cfg_flutter/widgets/info_tile.dart';
 import 'package:cfg_flutter/widgets/price_view.dart';
+import 'package:cfg_flutter/widgets/star_shape.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:greek_tools/greek_tools.dart';
@@ -225,6 +226,9 @@ class _StationsPageState extends State<StationsPage> {
     }
     return ListTile(
       leading: Checkbox(
+        // shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: const StarShape(),
+        checkColor: Colors.transparent,
         value: _favorites.contains(station.code),
         activeColor: Colors.green,
         onChanged: (bool? value) => _updateFavorite(station.code),

@@ -1,11 +1,16 @@
+import 'dart:math';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 
 class BarsPainter extends CustomPainter {
 
-  BarsPainter({required this.values});
+  BarsPainter({required this.values, required this.absMin, required this.absMax, this.selectedStationPrice = 0});
 
   final Map<int,int> values;
+  final int absMin;
+  final int absMax;
+  final int selectedStationPrice;
   final double padding = 4;
   final double fontSize = 10;
   final double barRadius = 2;
@@ -18,9 +23,18 @@ class BarsPainter extends CustomPainter {
     // preprocessing
     List<int> keys = values.keys.toList();
     keys.sort();
-    int min = keys.first;
-    int max = keys.last;
-    int median = values.median();
+    List<int> allPrices = [];
+    for(int key in keys) {
+      int numOfStationsWithPrice = values[key]!;
+      for(int i = 0; i < numOfStationsWithPrice; i++) {
+        allPrices.add(key);
+      }
+    }
+    int min = allPrices.first;
+    int max = allPrices.last;
+    int quartileStart = allPrices[allPrices.length ~/ 4];
+    int quartileEnd = allPrices[3 * allPrices.length ~/ 4];
+    int median = allPrices.median();
     int maxNumOfStations = values.values.toList().max;
 
     final minTextSpan = TextSpan(
@@ -58,18 +72,18 @@ class BarsPainter extends CustomPainter {
     double drawableHeight = minOffsetY - maxOffsetY;
     double drawableCenterY = maxOffsetY + drawableHeight / 2;
 
-    minTextPainter.paint(canvas, Offset(padding, size.height - minTextPainter.height - padding));
-    maxTextPainter.paint(canvas, Offset(size.width - maxTextPainter.width - padding, size.height - maxTextPainter.height - padding));
-    medianTextPainter.paint(canvas, Offset(minOffsetX + ((median - min) / (max - min)) * drawableWidth - medianTextPainter.width / 2, padding));
+    minTextPainter.paint(canvas, Offset(minOffsetX + ((min - absMin) / (absMax - absMin)) * drawableWidth - minTextPainter.width / 2, size.height - minTextPainter.height - padding));
+    maxTextPainter.paint(canvas, Offset(minOffsetX + ((max - absMin) / (absMax - absMin)) * drawableWidth - maxTextPainter.width / 2, size.height - maxTextPainter.height - padding));
+    medianTextPainter.paint(canvas, Offset(minOffsetX + ((median - absMin) / (absMax - absMin)) * drawableWidth - medianTextPainter.width / 2, padding));
 
     canvas.drawLine(
-        Offset(minOffsetX, maxOffsetY - padding),
-        Offset(minOffsetX, size.height - padding - minTextPainter.height),
+        Offset(minOffsetX + (min-absMin) / (absMax - absMin) * drawableWidth, maxOffsetY - padding),
+        Offset(minOffsetX + (min-absMin) / (absMax - absMin) * drawableWidth, size.height - padding - minTextPainter.height),
         Paint()..color = Colors.green..strokeWidth = 1.0
     );
     canvas.drawLine(
-        Offset(maxOffsetX, maxOffsetY - padding),
-        Offset(maxOffsetX, size.height - padding - minTextPainter.height),
+        Offset(minOffsetX + ((max - absMin) / (absMax - absMin)) * drawableWidth, maxOffsetY - padding),
+        Offset(minOffsetX + ((max - absMin) / (absMax - absMin)) * drawableWidth, size.height - padding - minTextPainter.height),
         Paint()..color = Colors.red..strokeWidth = 1.0
     );
     canvas.drawLine(
@@ -77,14 +91,53 @@ class BarsPainter extends CustomPainter {
         Offset(size.width, minOffsetY),
         Paint()..color = Colors.grey..strokeWidth = 0.2
     );
+    if(selectedStationPrice != 0) {
+      const double triangleSide = 10;
+      final double triangleHeight = triangleSide * sqrt(3) / 2;
+      double priceX = minOffsetX + ((selectedStationPrice - absMin) / (absMax - absMin)) * drawableWidth;
+      double arrowUpCenterY = size.height - padding - minTextPainter.height - triangleHeight;
+      double arrowDownCenterY = maxOffsetY - padding + triangleHeight;
+      Path hollowRectanglePath = Path()
+        ..moveTo(priceX, arrowDownCenterY - triangleHeight)
+        ..lineTo(priceX, arrowUpCenterY + triangleHeight);
+      canvas.drawPath(
+          hollowRectanglePath,
+          Paint()..color = Colors.orange..strokeWidth = 1.0..style = PaintingStyle.stroke
+      );
+      Path arrowUpPath = Path()
+        ..moveTo(priceX, arrowUpCenterY)
+        ..lineTo(priceX + triangleSide / 2, arrowUpCenterY + triangleHeight)
+        ..lineTo(priceX - triangleSide / 2, arrowUpCenterY + triangleHeight)
+        ..lineTo(priceX, arrowUpCenterY);
+      canvas.drawPath(
+          arrowUpPath,
+          Paint()..color = Colors.orange..strokeWidth = 1.0
+      );
+      Path arrowDownPath = Path()
+        ..moveTo(priceX, arrowDownCenterY)
+        ..lineTo(priceX + triangleSide / 2, arrowDownCenterY - triangleHeight)
+        ..lineTo(priceX - triangleSide / 2, arrowDownCenterY - triangleHeight)
+        ..lineTo(priceX, arrowDownCenterY);
+      canvas.drawPath(
+          arrowDownPath,
+          Paint()..color = Colors.orange..strokeWidth = 2.0
+      );
+    }
+    canvas.drawRect(
+        Rect.fromLTWH(
+          minOffsetX + ((quartileStart - absMin) / (absMax - absMin)) * drawableWidth, drawableCenterY - drawableHeight / 2,
+          ((quartileEnd - quartileStart) / (absMax - absMin)) * drawableWidth, drawableHeight,
+        ),
+        Paint()..color = const Color(0x16000000)
+    );
     canvas.drawLine(
         Offset(0, maxOffsetY),
         Offset(size.width, maxOffsetY),
         Paint()..color = Colors.grey..strokeWidth = 0.2
     );
     canvas.drawLine(
-        Offset(minOffsetX + ((median - min) / (max - min)) * drawableWidth, maxOffsetY - padding),
-        Offset(minOffsetX + ((median - min) / (max - min)) * drawableWidth, size.height - padding - minTextPainter.height),
+        Offset(minOffsetX + ((median - absMin) / (absMax - absMin)) * drawableWidth, maxOffsetY - padding),
+        Offset(minOffsetX + ((median - absMin) / (absMax - absMin)) * drawableWidth, size.height - padding - minTextPainter.height),
         Paint()..color = Colors.purple..strokeWidth = 1.0
     );
     // canvas.drawLine(
@@ -96,7 +149,7 @@ class BarsPainter extends CustomPainter {
     canvas.drawLine(Offset(0, drawableCenterY), Offset(size.width, drawableCenterY), Paint()..color = axisColor);
 
     for(int key in keys) {
-      double keyX = (key - min) / (max-min);
+      double keyX = (key - absMin) / (absMax-absMin);
       int numOfStations = values[key]!;
       double valueIntensity = numOfStations / maxNumOfStations;
       double barHeight = valueIntensity * (drawableHeight - 2 * padding);
