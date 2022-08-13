@@ -1,20 +1,18 @@
 import 'dart:async';
-import 'dart:io' as io;
 import 'dart:convert';
 
+import 'package:cfg_flutter/model/range.dart';
 import 'package:cfg_flutter/widgets/distance_view.dart';
-import 'package:cfg_flutter/widgets/info_tile.dart';
+import 'package:cfg_flutter/widgets/heart_shape.dart';
 import 'package:cfg_flutter/widgets/price_view.dart';
-import 'package:cfg_flutter/widgets/star_shape.dart';
 import 'package:flutter/material.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:greek_tools/greek_tools.dart';
 import 'package:location/location.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../keys.dart';
 import '../main.dart';
+import '../model/brands.dart';
 import '../model/favorites.dart';
 import '../model/fuel_type.dart';
 import '../model/location_model.dart';
@@ -23,12 +21,19 @@ import '../model/station.dart';
 import '../model/sync_response.dart';
 import '../util.dart';
 import '../view_mode.dart';
+import 'bars_painter.dart';
 
 class StationsPage extends StatefulWidget {
-  const StationsPage({Key? key, required this.title, required this.viewMode}) : super(key: key);
+  const StationsPage({Key? key, required this.title, required this.fuelType, required this.viewMode,
+    required this.syncResponse, required this.brands, required this.showStatisticsInStationsView, required this.selectedRange}) : super(key: key);
 
   final String title;
+  final FuelType fuelType;
   final ViewMode viewMode;
+  final SyncResponse syncResponse;
+  final Brands brands;
+  final bool showStatisticsInStationsView;
+  final Range selectedRange;
 
   @override
   State<StationsPage> createState() => _StationsPageState();
@@ -36,62 +41,29 @@ class StationsPage extends StatefulWidget {
 
 class _StationsPageState extends State<StationsPage> {
 
-  Future<void> _createAnchoredBanner(BuildContext context) async {
-    final AnchoredAdaptiveBannerAdSize? size = await AdSize.getAnchoredAdaptiveBannerAdSize(
-      Orientation.portrait,
-      MediaQuery.of(context).size.width.truncate(),
-    );
-
-    if (size == null) {
-      // print('Unable to get height of anchored banner.');
-      return;
-    }
-
-    final BannerAd banner = BannerAd(
-      size: size,
-      request: const AdRequest(),
-      adUnitId: io.Platform.isAndroid ? adUnitIdAndroid : adUnitIdIOS,
-      listener: BannerAdListener(
-        onAdLoaded: (Ad ad) {
-          // print('$BannerAd loaded.');
-          setState(() {
-            _anchoredBanner = ad as BannerAd?;
-          });
-        },
-        onAdFailedToLoad: (Ad ad, LoadAdError error) {
-          ad.dispose();
-        },
-      ),
-    );
-    return banner.load();
-  }
-
-  BannerAd? _anchoredBanner;
-  bool _loadingAnchoredBanner = false;
-
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
 
+  late int _fuelTypeIndex = 0;
   late FuelType _fuelType = FuelType.petrol95;
+  late SyncResponse? _syncResponse = widget.syncResponse;
   late Favorites _favorites = Favorites.empty();
-  SyncResponse? _syncResponse;
-  bool showZeros = false;
+  final bool _showZeros = false;
 
   @override
   void initState() {
     super.initState();
 
+    _fuelType = widget.fuelType;
+    _fuelTypeIndex = _fuelType.index;
+    _syncResponse = widget.syncResponse;
+
     _prefs.then((SharedPreferences prefs) {
-      int fuelTypeIndex = prefs.getInt(
-          CyprusFuelGuideApp.keySelectedFuelType) ?? FuelType.petrol95.index;
       final String? favoriteStationCodesRawJson = prefs.getString(
           CyprusFuelGuideApp.keyFavoriteStationCodesRawJson);
-      final String? lastRawJson = prefs.getString(
-          CyprusFuelGuideApp.keyLastRawJson);
       setState(() {
-        _fuelType = FuelType.values[fuelTypeIndex];
+        _fuelType = FuelType.values[_fuelTypeIndex];
         _favorites = favoriteStationCodesRawJson != null ? Favorites.fromJson(
             jsonDecode(favoriteStationCodesRawJson)) : Favorites.empty();
-        _syncResponse = SyncResponse.fromRawJson(lastRawJson!);
       });
     });
   }
@@ -105,66 +77,48 @@ class _StationsPageState extends State<StationsPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_loadingAnchoredBanner) {
-      _loadingAnchoredBanner = true;
+    Map<int,int> priceCounts = {};
+    for (Price price in _syncResponse!.prices) {
+      int p = price.prices[_fuelTypeIndex];
+      if(p == 0) continue; // ignore zeros for price - they usually mean the station doesn't have that fuel type
+      if(!priceCounts.containsKey(p)) {
+        priceCounts[p] = 0;
+      }
+      priceCounts[p] = priceCounts[p]! + 1;
     }
-    _createAnchoredBanner(context);
+    List<int> prices = priceCounts.keys.toList();
+    prices.sort();
+    int absMin = prices.first;
+    int absMax = prices.last;
 
-    String label = ' ⛽ ';
-    switch(widget.viewMode) {
-      case ViewMode.overview: label += 'Overview'; break;
-      case ViewMode.cheapest: label += 'Cheapest'; break;
-      case ViewMode.nearest: label += 'Nearest'; break;
-      case ViewMode.favorites: label += 'Favorites'; break;
-    }
-    label += ' · ';
-    switch(_fuelType) {
-      case FuelType.petrol95: label += 'Unleaded Petrol 95'; break;
-      case FuelType.petrol98: label += 'Unleaded Petrol 98'; break;
-      case FuelType.diesel: label += 'Diesel'; break;
-      case FuelType.heating: label += 'Heating'; break;
-      case FuelType.kerosene: label += 'Kerosene'; break;
-    }
-
-    return Scaffold(
-        appBar: AppBar(
-          title: Text(widget.title),
-          leading: IconButton(icon: const Icon(Icons.arrow_back),
-              onPressed: () => Navigator.of(context).pop(false)),
-        ),
-        body: Column(
-          children: [
-            Expanded(
-                child: _syncResponse == null
-                    ?
-                const Center(child: Text('No data'))
-                    :
-                Column(
-                  children: [
-                    InfoTileWidget(label: label),
-                    Expanded(child: Consumer<LocationModel>(
-                        builder: (context, locationModel, child) {
-                          return _getStationsListView(locationModel.locationData);
-                        }
-                    )),
-                  ],
-                )
-            ),
-
-            // show ad banner
-            _anchoredBanner == null
+    return Column(
+      children: [
+        Expanded(
+            child: _syncResponse == null
                 ?
-            Container() // empty if no ads
+            const Center(child: Text('No data'))
                 :
-            Container(
-              color: Colors.amber,
-              alignment: Alignment.center,
-              width: _anchoredBanner!.size.width.toDouble(),
-              height: _anchoredBanner!.size.height.toDouble(),
-              child: AdWidget(ad: _anchoredBanner!),
-            ) // shows ads only on Web
-          ],
-        )
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // InfoTileWidget(label: label),
+                widget.showStatisticsInStationsView ?
+                SizedBox(
+                  height: 100,
+                  child: CustomPaint(painter: BarsPainter(values: priceCounts, absMin: absMin, absMax: absMax)),
+                )
+                    :
+                Container(),
+                Container(height: 1, color: Colors.brown),
+                Expanded(child: Consumer<LocationModel>(
+                    builder: (context, locationModel, child) {
+                      return _getStationsListView(locationModel.locationData);
+                    }
+                )),
+              ],
+            )
+        ),
+      ],
     );
   }
 
@@ -175,19 +129,30 @@ class _StationsPageState extends State<StationsPage> {
       stationCodeToPrice[price.stationCode] = price;
     }
     // filter stations
+    double lat = locationData == null ? 0 : locationData.latitude ?? 0;
+    double lng = locationData == null ? 0 : locationData.longitude ?? 0;
+    final double rangeInMeters = widget.selectedRange.value * 1000;
     final List<Station> selectedStations = [];
     for(final Station station in _syncResponse!.stations) {
+      // filter stations by brands (except in favorites)
+      final bool stationBrandIsSelected = widget.brands.isEmpty() || widget.brands.isChecked(station.brand); // is empty, do not filter
       Price? price = stationCodeToPrice[station.code];
       if(widget.viewMode == ViewMode.favorites) {
-        if(_favorites.contains(station.code)) {
+        if (_favorites.contains(station.code)) {
+          selectedStations.add(station);
+        }
+      } else if(widget.viewMode == ViewMode.bestValue && locationData != null) { // limit by distance < range
+        double distance = Util.calculateDistanceInMeters(lat, lng, station.lat, station.lng);
+        if(distance <= rangeInMeters && !_showZeros && price != null && price.prices[_fuelType.index] > 0 && stationBrandIsSelected) {
           selectedStations.add(station);
         }
       } else { // viewMode is ViewMode.cheapest or ViewMode.nearest...
-        if((!showZeros && price != null && price.prices[_fuelType.index] > 0)) {
+        if(!_showZeros && price != null && price.prices[_fuelType.index] > 0 && stationBrandIsSelected) {
           selectedStations.add(station);
         }
       }
     }
+
     // sort by price or distance
     if(widget.viewMode == ViewMode.nearest && locationData != null) { // sort by distance
       double lat = locationData.latitude!;
@@ -209,6 +174,30 @@ class _StationsPageState extends State<StationsPage> {
       });
     }
 
+    if(widget.viewMode == ViewMode.favorites && selectedStations.isEmpty) {
+      return ListView(
+        children: const [
+          ListTile(
+            leading: Icon(Icons.block),
+            title: Text('No favorites found'),
+            subtitle: Text('You can select any stations as favorite from the other views'),
+          ),
+        ],
+      );
+    }
+
+    if(widget.viewMode == ViewMode.bestValue && selectedStations.isEmpty) {
+      return ListView(
+        children: const [
+          ListTile(
+            leading: Icon(Icons.block),
+            title: Text('No stations found within the range'),
+            subtitle: Text('You can increase the range in the settings or select another view'),
+          ),
+        ],
+      );
+    }
+
     return ListView.separated(
       itemCount: selectedStations.length,
       itemBuilder: (context, index) => _getStationListTile(context, selectedStations[index], stationCodeToPrice[selectedStations[index].code]!, locationData),
@@ -227,10 +216,11 @@ class _StationsPageState extends State<StationsPage> {
     return ListTile(
       leading: Checkbox(
         // shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        shape: const StarShape(),
+        // shape: const StarShape(),
+        shape: const HeartShape(),
         checkColor: Colors.transparent,
         value: _favorites.contains(station.code),
-        activeColor: Colors.green,
+        activeColor: Colors.brown,
         onChanged: (bool? value) => _updateFavorite(station.code),
       ),
       title: Row(

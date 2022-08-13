@@ -103,24 +103,42 @@ class _OverviewState extends State<Overview> {
       }
     }
 
+    int numOfBestValueStations = 0;//todo
+    int bestValueMinPrice = 1234;//todo
+    int bestValueDiff = (avgPrice - bestValueMinPrice).round();
+    int bestValueDistance = 10; //todo
+
     return ListView(
       children: [
-        // best price cards
-        _getCard(const Icon(Icons.euro_outlined, color: Colors.green), 'Lowest price €${(minPrice/1000).toStringAsFixed(3)} in $numOfStations stations', 'This is ${diff/10}¢ cheaper than the average, available in $numOfBestPriceStations station${numOfBestPriceStations > 1 ? "s" : ""}', _navToStationsByPrice),
+        // best value card
+        locationData == null
+            ?
+        const UnknownLocationCard()
+            :
+        _getCard(const Icon(Icons.thumb_up_outlined, color: Colors.brown), 'Best value €${(bestValueMinPrice/1000).toStringAsFixed(3)} in $numOfBestValueStations stations', 'This is ${bestValueDiff/10}¢ cheaper than the average, available in stations within ${bestValueDistance} Kms', _navToStationsByPrice),
+
+        // lowest price card
+        _getCard(const Icon(Icons.euro_outlined, color: Colors.brown), 'Lowest price €${(minPrice/1000).toStringAsFixed(3)} in $numOfStations stations', 'This is ${diff/10}¢ cheaper than the average, available in $numOfBestPriceStations station${numOfBestPriceStations > 1 ? "s" : ""}', _navToStationsByPrice),
+
         // check location
         locationData == null
             ?
         const UnknownLocationCard()
             :
-        _getCard(const Icon(Icons.near_me_outlined, color: Colors.green), 'Nearest station ${Util.formatDistance(nearestStationDistance)} away', 'Prices from €${nearestStationPrice!/1000}', _navToStationsByDistance),
+        _getCard(const Icon(Icons.near_me_outlined, color: Colors.brown), 'Nearest station ${Util.formatDistance(nearestStationDistance)} away', 'Prices from €${nearestStationPrice!/1000}', _navToStationsByDistance),
+
         // check favorites
         _favorites.isEmpty()
             ?
         const NoFavoritesCard()
             :
-        _getCard(const Icon(Icons.check_box_outlined, color: Colors.green), 'Best price €${(bestPrice/1000).toStringAsFixed(3)} in favorites', 'Comparing prices from ${_favorites.length()} favorite${_favorites.length() > 1 ? 's' : ''}', _navToFavoriteStations),
-        // stats
-        _getCard(const Icon(Icons.stacked_line_chart_outlined, color: Colors.green), 'Analytics', 'Analytics for fuel prices', _navToTrendsPage),
+        _getCard(const Icon(Icons.favorite_border_outlined, color: Colors.brown), 'Best price €${(bestPrice/1000).toStringAsFixed(3)} in favorites', 'Comparing prices from ${_favorites.length()} favorite${_favorites.length() > 1 ? 's' : ''}', _navToFavoriteStations),
+
+        // analytics
+        _getCard(const Icon(Icons.stacked_line_chart_outlined, color: Colors.brown), 'Analytics', 'Analytics for fuel prices', _navToTrendsPage),
+
+        // trends
+        // _getCard(const Icon(Icons.auto_graph_outlined, color: Colors.brown), 'Trends', 'How fuel prices change', _navToTrendsPage),
       ],
     );
   }
@@ -170,6 +188,6 @@ class _OverviewState extends State<Overview> {
   }
 
   void _navToTrendsPage() async {
-    CyprusFuelGuideApp.router.navigateTo(context, '/analytics');
+    CyprusFuelGuideApp.router.navigateTo(context, '/analytics').then((_) => _loadFromPreferences());
   }
 }

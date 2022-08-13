@@ -18,7 +18,7 @@ class AnalyticsPage extends StatefulWidget {
   const AnalyticsPage({Key? key, required this.title}) : super(key: key);
 
   final String title;
-  final double fontSize = 10;
+  final double fontSize = 13;
 
   @override
   State<AnalyticsPage> createState() => _AnalyticsPageState();
@@ -235,12 +235,13 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                         expandedCrossAxisAlignment: CrossAxisAlignment.start,
                         expandedAlignment: Alignment.centerLeft,
                         children: [
-                          Text('num of stations: ${citiesToCountsOfStations[city]}', style: TextStyle(color: Colors.black, fontSize: widget.fontSize)),
-                          Text('lowest price: €${keys.first/1000}', style: TextStyle(color: Colors.green, fontSize: widget.fontSize)),
-                          Text('1st quartile: €${quartileStart/1000}', style: TextStyle(color: Colors.black54, fontSize: widget.fontSize)),
-                          Text('median price: €${median/1000}', style: TextStyle(color: Colors.purple, fontSize: widget.fontSize)),
-                          Text('3rd quartile: €${quartileEnd/1000}', style: TextStyle(color: Colors.black54, fontSize: widget.fontSize)),
-                          Text('highest price: €${keys.last/1000}', style: TextStyle(color: Colors.red, fontSize: widget.fontSize)),
+                          Text('Frequency of stations by price', style: TextStyle(color: Colors.black, fontSize: widget.fontSize, fontWeight: FontWeight.bold)),
+                          Text('  - num of stations: ${citiesToCountsOfStations[city]}', style: TextStyle(color: Colors.black, fontSize: widget.fontSize)),
+                          Text('  - lowest price: €${keys.first/1000}', style: TextStyle(color: Colors.green, fontSize: widget.fontSize)),
+                          Text('  - 1st quartile: €${quartileStart/1000}', style: TextStyle(color: Colors.black54, fontSize: widget.fontSize)),
+                          Text('  - median price: €${median/1000}', style: TextStyle(color: Colors.purple, fontSize: widget.fontSize)),
+                          Text('  - 3rd quartile: €${quartileEnd/1000}', style: TextStyle(color: Colors.black54, fontSize: widget.fontSize)),
+                          Text('  - highest price: €${keys.last/1000}', style: TextStyle(color: Colors.red, fontSize: widget.fontSize)),
                           const SizedBox(height: 10),
                         ],
                       )

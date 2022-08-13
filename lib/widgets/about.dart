@@ -52,49 +52,67 @@ class AboutState extends State<AboutPage> {
         ),
         body: ListView(
           children: [
-            _getCard(Image.asset('icons/launcher.png', width: 32, height: 32), 'Cyprus Fuel Guide', 'http://cyprusfuelguide.com', _launchURI, 'http://cyprusfuelguide.com'),
-            _getCard(const Icon(Icons.data_array, color: Colors.brown, size: 32), databaseTitle, databaseSubtitle, _launchURI, 'https://cyprusfuelguide.com'),
-            _getCard(const Icon(Icons.code, color: Colors.brown, size: 32), 'Developed with ❤ by', 'http://aspectsense.com', _launchURI, 'http://aspectsense.com'),
-            _getCard(const Icon(Icons.build, color: Colors.brown, size: 32), 'Open Source Software', 'Version $_version', _launchURI, 'https://cyprusfuelguide.com'),
-            _getCard(const Icon(Icons.favorite, color: Colors.brown, size: 32), 'Loved the app?', 'Click to rate', _launchURI, _getMarketplaceLink()),
+
+            ListTile(
+              leading: Image.asset('icons/launcher.png', width: 32, height: 32,),
+              title: const Text('Cyprus Fuel Guide'),
+              subtitle: const Text('https://cyprusfuelguide.com'),
+              onTap: () => _launchURI('https://cyprusfuelguide.com'),
+            ),
+            const Divider(color: Colors.brown),
+
+            ListTile(
+              leading: const Icon(Icons.data_array, color: Colors.brown, size: 32,),
+              title: Text(databaseTitle),
+              subtitle: Text(databaseSubtitle),
+              onTap: () => _launchURI('https://cyprusfuelguide.com'),
+            ),
+            const Divider(color: Colors.brown),
+
+            ListTile(
+              leading: const Icon(Icons.code, color: Colors.brown, size: 32,),
+              title: const Text('Developed with ❤ by'),
+              subtitle: const Text('http://aspectsense.com'),
+              onTap: () => _launchURI('https://aspectsense.com'),
+            ),
+            const Divider(color: Colors.brown),
+
+            ListTile(
+              leading: const Icon(Icons.build, color: Colors.brown, size: 32,),
+              title: const Text('Open Source Software'),
+              subtitle: Text('Version $_version'),
+              onTap: () => _launchURI('https://cyprusfuelguide.com'),
+            ),
+            const Divider(color: Colors.brown),
+
+            ListTile(
+              leading: const Icon(Icons.favorite, color: Colors.brown, size: 32,),
+              title: const Text('Loved the app?'),
+              subtitle: const Text('Click to rate'),
+              onTap: () => _launchURI(_getMarketplaceLink()!),
+            ),
+            const Divider(color: Colors.brown),
+
+            // _getCard(Image.asset('icons/launcher.png', width: 32, height: 32), 'Cyprus Fuel Guide', 'http://cyprusfuelguide.com', _launchURI, 'http://cyprusfuelguide.com'),
+            // _getCard(const Icon(Icons.data_array, color: Colors.brown, size: 32), databaseTitle, databaseSubtitle, _launchURI, 'https://cyprusfuelguide.com'),
+            // _getCard(const Icon(Icons.code, color: Colors.brown, size: 32), 'Developed with ❤ by', 'http://aspectsense.com', _launchURI, 'http://aspectsense.com'),
+            // _getCard(const Icon(Icons.build, color: Colors.brown, size: 32), 'Open Source Software', 'Version $_version', _launchURI, 'https://cyprusfuelguide.com'),
+            // _getCard(const Icon(Icons.favorite, color: Colors.brown, size: 32), 'Loved the app?', 'Click to rate', _launchURI, _getMarketplaceLink()),
             Visibility(
               visible: !kIsWeb,
-              child: _getCard(const Icon(Icons.share, color: Colors.brown, size: 32), 'Tell the world!', 'Share with your friends', _share, 'Get Cyprus Fuel Guide for Android and iOS for free at http://cyprusfuelguide.com'),
+              child: ListTile(
+                leading: const Icon(Icons.share, color: Colors.brown, size: 32,),
+                title: const Text('Tell the world!'),
+                subtitle: const Text('Share with your friends'),
+                onTap: () => _share('Get Cyprus Fuel Guide for Android and iOS for free at http://cyprusfuelguide.com'),
+              ),
+              // _getCard(const Icon(Icons.share, color: Colors.brown, size: 32), 'Tell the world!', 'Share with your friends', _share, 'Get Cyprus Fuel Guide for Android and iOS for free at http://cyprusfuelguide.com'),
+            ),
+            const Visibility(
+              visible: !kIsWeb,
+              child: Divider(color: Colors.brown),
             )
           ],
-        )
-      // )
-    );
-  }
-
-  Widget _getCard(Widget icon, String title, String subtitle, Function callback, String? callbackParameter) {
-    return Padding(
-        padding: const EdgeInsets.fromLTRB(8, 16, 8, 0),
-        child: Card(
-            elevation: 4,
-            child: InkWell(
-              onTap: () => callback(callbackParameter),
-              child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Container(width: 5),
-                      icon,
-                      Container(width: 15),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(title, style: Theme.of(context).textTheme.headline6),
-                            Container(height: 12),
-                            Text(subtitle, style: Theme.of(context).textTheme.caption),
-                          ],
-                        ),
-                      )
-                    ],
-                  )
-              ),
-            )
         )
     );
   }

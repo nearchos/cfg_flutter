@@ -1,6 +1,8 @@
 enum ViewMode {
-  overview,
+  // overview,
+  bestValue,
   cheapest,
   nearest,
-  favorites
+  favorites,
+  // analytics
 }

@@ -12,7 +12,7 @@ class BarsPainter extends CustomPainter {
   final int absMax;
   final int selectedStationPrice;
   final double padding = 4;
-  final double fontSize = 10;
+  final double fontSize = 13;
   final double barRadius = 2;
   final Color barColor = Colors.red;
   final Color axisColor = Colors.black;

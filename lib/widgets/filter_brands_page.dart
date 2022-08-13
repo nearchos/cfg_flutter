@@ -48,7 +48,7 @@ class FilterBrandsState extends State<FilterBrandsPage> {
           if(station.brand.trim().isEmpty) {
             station.brand = 'INDEPENDENT';
           }
-          if(!_brands.contains(station.brand)) {
+          if(!_brands.containsAsCheckedOrUnchecked(station.brand)) {
             _brands.check(station.brand);
           }
           if(!_brandPopulation.containsKey(station.brand)) {
@@ -93,6 +93,7 @@ class FilterBrandsState extends State<FilterBrandsPage> {
                 ),
               ),
             ),
+            Container(color: Colors.brown, height: 1),
             Expanded(child: _getBrandsListView())
           ],
         )

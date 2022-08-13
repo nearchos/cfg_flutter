@@ -8,6 +8,7 @@ class DotRadioListTile<T> extends StatelessWidget {
   final String title;
   final IconData? iconData;
   final bool dense;
+  final bool alwaysShowLeadingIcon;
 
   const DotRadioListTile({
     Key? key,
@@ -16,7 +17,8 @@ class DotRadioListTile<T> extends StatelessWidget {
     required this.onChanged,
     required this.title,
     this.iconData,
-    this.dense = true
+    this.dense = true,
+    this.alwaysShowLeadingIcon = false
   }) : super(key: key);
 
   @override
@@ -25,7 +27,8 @@ class DotRadioListTile<T> extends StatelessWidget {
 
     return ListTile(
       title: Text(title, style: isSelected ? const TextStyle(fontWeight: FontWeight.bold) : const TextStyle(fontWeight: FontWeight.normal)),
-      leading: !isSelected ? const SizedBox() : SizedBox(
+      leading: alwaysShowLeadingIcon || isSelected && iconData != null ? Icon(iconData, color: Colors.brown) : const SizedBox(),
+      trailing: !isSelected ? const SizedBox() : SizedBox(
         width: 30,
         height: 30,
         child: Center(
@@ -40,7 +43,6 @@ class DotRadioListTile<T> extends StatelessWidget {
         ),
       ),
       dense: dense,
-      trailing: isSelected && iconData != null ? Icon(iconData, color: Colors.brown) : const SizedBox(),
       onTap: () => onChanged(value),
     );
   }

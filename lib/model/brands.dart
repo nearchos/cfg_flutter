@@ -15,7 +15,7 @@ class Brands {
     );
   }
 
-  bool contains(String name) => checked.contains(name) || unchecked.contains(name);
+  bool containsAsCheckedOrUnchecked(String name) => checked.contains(name) || unchecked.contains(name);
   bool isChecked(String name) => checked.contains(name);
   bool isUnchecked(String name) => unchecked.contains(name);
   int numOfChecked() => checked.length;

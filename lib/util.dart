@@ -1,3 +1,4 @@
+import 'package:cfg_flutter/view_mode.dart';
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
 import 'package:cfg_flutter/model/fuel_type.dart';
@@ -39,6 +40,19 @@ class Util {
         return 'Heating oil';
       case FuelType.kerosene:
         return 'Kerosene';
+    }
+  }
+
+  static String nameOfViewMode(ViewMode viewMode) {
+    switch(viewMode) {
+      case ViewMode.bestValue:
+        return 'Best Value';
+      case ViewMode.cheapest:
+        return 'Cheapest';
+      case ViewMode.nearest:
+        return 'Nearest';
+      case ViewMode.favorites:
+        return 'Favorites';
     }
   }
 
@@ -115,6 +129,23 @@ class Util {
       return 'images/total_plus.png';
     } else {
       return 'images/independent.png';
+    }
+  }
+
+  static String getSynchronizeSubtitle(final int lastSynced) {
+    if(lastSynced == 0) {
+      return 'Not synced yet';
+    } else {
+      int millisecondsSinceLastSync = DateTime.now().millisecondsSinceEpoch - lastSynced;
+      if(millisecondsSinceLastSync < 2 * Util.oneSecondInMilliseconds) {
+        return 'Last synced just now!';
+      } else if(millisecondsSinceLastSync < 2 * Util.oneMinuteInMilliseconds) {
+        return 'Last synced ${millisecondsSinceLastSync ~/ Util.oneSecondInMilliseconds} seconds ago';
+      } else if(millisecondsSinceLastSync < 2 * Util.oneHourInMilliseconds) {
+        return 'Last synced ${millisecondsSinceLastSync ~/ Util.oneMinuteInMilliseconds} minutes ago';
+      } else {
+        return 'Last synced ${millisecondsSinceLastSync ~/ Util.oneHourInMilliseconds} hours ago';
+      }
     }
   }
 }

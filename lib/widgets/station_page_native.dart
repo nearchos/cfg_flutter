@@ -28,6 +28,7 @@ class StationPage extends StatefulWidget {
   const StationPage({Key? key, required this.code}) : super(key: key);
 
   final String code; // station code
+  final double fontSize = 13;
 
   @override
   State<StationPage> createState() => _StationPageState();
@@ -90,6 +91,8 @@ class _StationPageState extends State<StationPage> {
   late List<Station> _stations;
   late List<Price> _prices;
 
+  late bool _showStatisticsInStationView = true;
+
   @override
   void initState() {
     super.initState();
@@ -101,6 +104,7 @@ class _StationPageState extends State<StationPage> {
       _prices = syncResponse.prices;
       _fuelTypeIndex = prefs.getInt(CyprusFuelGuideApp.keySelectedFuelType) ?? FuelType.petrol95.index;
       bool showInGreek = prefs.getBool(CyprusFuelGuideApp.keyShowInGreek) ?? false;
+      bool showStatisticsInStationView = prefs.getBool(CyprusFuelGuideApp.keyShowStatisticsInStationView) ?? true;
 
       setState(() {
         _station = _stations.firstWhere((s) => s.code == widget.code);
@@ -108,6 +112,7 @@ class _StationPageState extends State<StationPage> {
         _title = _station!.name;
         _fuelType = FuelType.values[_fuelTypeIndex];
         _showInGreek = showInGreek;
+        _showStatisticsInStationView = showStatisticsInStationView;
       });
     });
   }
@@ -131,7 +136,7 @@ class _StationPageState extends State<StationPage> {
                   ?
               const LinearProgressIndicator()
                   :
-              _getStationView(),
+              _getStationView(widget.fontSize),
             ),
 
             _anchoredBanner == null
@@ -150,7 +155,7 @@ class _StationPageState extends State<StationPage> {
     );
   }
 
-  Widget _getStationView() {
+  Widget _getStationView(final double fontSize) {
 
     Map<int,int> priceCounts = {};
     for (Price price in _prices) {
@@ -177,10 +182,11 @@ class _StationPageState extends State<StationPage> {
       }
     }
     String message;
+    String parentheses = priceCounts[price]! > 1 ? ' (with ${priceCounts[price]!-1} more)' : '';
     if(price == absMin) {
-      message = 'This station is ranked #$rank and is among the cheapest in Cyprus. It is ${(absMax - absMin) / 10}¢ cheaper than the most expensive station.';
+      message = 'This station is ranked #$rank and is the cheapest in Cyprus$parentheses. It is ${(absMax - absMin) / 10}¢ cheaper than the most expensive station.';
     } else if(price == absMax) {
-      message = 'This station is ranked #$rank and is one of the most expensive in Cyprus. It is ${(absMax - absMin) / 10}¢ more expensive than the cheapest station.';
+      message = 'This station is ranked #$rank and is one of the most expensive in Cyprus$parentheses. It is ${(absMax - absMin) / 10}¢ more expensive than the cheapest station.';
     } else {
       message = 'This station is ranked #$rank and is cheaper than $cheaperThan stations. It is ${(price - absMin) / 10}¢ more expensive than the cheapest.';
     }
@@ -216,13 +222,16 @@ class _StationPageState extends State<StationPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    _showStatisticsInStationView ?
                     SizedBox(
                       height: 100,
                       child: CustomPaint(painter: BarsPainter(values: priceCounts, absMin: absMin, absMax: absMax, selectedStationPrice: _price!.prices[_fuelTypeIndex])),
-                    ),
+                    )
+                        :
+                    Container(),
                     Padding(
                       padding: const EdgeInsets.all(4),
-                      child: Text(message, style: const TextStyle(fontSize: 12, color: Colors.black87)),
+                      child: Text(message, style: TextStyle(fontSize: fontSize, color: Colors.black87)),
                     ),
                   ],
                 ),
