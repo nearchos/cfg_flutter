@@ -1,14 +1,17 @@
 import 'package:flutter/foundation.dart';
-import 'package:location/location.dart';
+
+import 'coordinates.dart';
 
 class LocationModel extends ChangeNotifier {
 
-  LocationData? _locationData;
+  Coordinates _coordinates = Coordinates(35.1856, 33.3823); // hardcoded Nicosia coordinates as default
 
-  void update(LocationData? locationData) {
-    _locationData = locationData;
+  void update(Coordinates coordinates) {
+    _coordinates = coordinates;
     notifyListeners();
   }
 
-  LocationData? get locationData => _locationData;
+  Coordinates get coordinates => _coordinates;
+  double get latitude => _coordinates.latitude;
+  double get longitude => _coordinates.longitude;
 }

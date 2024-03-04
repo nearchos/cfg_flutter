@@ -28,18 +28,18 @@ class SyncResponse {
   factory SyncResponse.fromJson(Map<String, dynamic> json) {
 
     var listOfStations = json['stations'].map((i) => Station.fromJson(i)).toList();
-    var listOfRemovedStations = json['removedStations'].map((i) => Station.fromJson(i)).toList();
-    var listOfOfflines = json['offlines'].map((i) => Offline.fromJson(i)).toList();
+    var listOfRemovedStations = json['removedStations'] != null ? json['removedStations'].map((i) => Station.fromJson(i)).toList() : [];
+    var listOfOfflines = json['offlines'] != null ? json['offlines'].map((i) => Offline.fromJson(i)).toList() : [];
     var listOfPrices = json['prices'].map((i) => Price.fromJson(i)).toList();
 
     return SyncResponse(
         status: json['status'],
-        from: json['from'],
+        from: json['from'] ?? 0,
         stations: List<Station>.from(listOfStations),
         removedStations: List<Station>.from(listOfRemovedStations),
         offlines: List<Offline>.from(listOfOfflines),
         prices: List<Price>.from(listOfPrices),
-        numberOfModifications: json['numberOfModifications'],
+        numberOfModifications: json['numberOfModifications'] ?? 0,
         processedInMilliseconds: json['processedInMilliseconds'],
         lastUpdated: json['lastUpdated']
     );

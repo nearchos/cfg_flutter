@@ -2,9 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'dart:io' show Platform;
-import 'package:share_plus/share_plus.dart';
 
 import '../main.dart';
 import '../util.dart';
@@ -21,7 +19,7 @@ class AboutPage extends StatefulWidget {
 
 class AboutState extends State<AboutPage> {
 
-  String? _version;
+  final String _version = "0.0.0"; // todo
   late String databaseTitle = '';
   late String databaseSubtitle = '';
 
@@ -31,7 +29,7 @@ class AboutState extends State<AboutPage> {
   void initState() {
     super.initState();
 
-    PackageInfo.fromPlatform().then((PackageInfo packageInfo) => setState(() { _version = '${packageInfo.version}-${packageInfo.buildNumber}'; }));
+    // PackageInfo.fromPlatform().then((PackageInfo packageInfo) => setState(() { _version = '${packageInfo.version}-${packageInfo.buildNumber}'; })); //todo
     _prefs.then((SharedPreferences prefs) {
       final int lastUpdateTimestamp = prefs.getInt(CyprusFuelGuideApp.keyLastUpdateTimestamp) ?? 0;
       final int lastSynced = prefs.getInt(CyprusFuelGuideApp.keyLastSynced) ?? 0;
@@ -120,7 +118,11 @@ class AboutState extends State<AboutPage> {
   void _launchURI(String url) async =>
       await canLaunchUrl(Uri.parse(url)) ? await launchUrl(Uri.parse(url)) : throw 'Could not launch $url';
 
-  void _share(String message) => Share.share(message);
+  // void _share(String message) => Share.share(message);
+
+  void _share(String message) {
+    // todo
+  }
 
   String? _getMarketplaceLink() {
     try {

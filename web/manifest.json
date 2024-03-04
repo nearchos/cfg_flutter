@@ -1,11 +1,11 @@
 {
-    "name": "cfg_flutter",
-    "short_name": "cfg_flutter",
+    "name": "Cyprus Fuel Guide",
+    "short_name": "CyFuelGuide",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "Cyprus Fuel Guide Flutter project.",
+    "description": "Cyprus Fuel Guide App.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -9,13 +9,14 @@ import 'package:flutter/material.dart';
 import 'package:greek_tools/greek_tools.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:location/location.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_maps/google_maps.dart' as g_maps;
 import 'package:universal_html/html.dart' as html;
+import 'package:web/src/dom/html.dart' show HTMLElement;
 
 import '../main.dart';
+import '../model/coordinates.dart';
 import '../model/location_model.dart';
 import '../model/price.dart';
 import '../model/station.dart';
@@ -23,7 +24,7 @@ import '../util.dart';
 import 'bars_painter.dart';
 
 class StationPage extends StatefulWidget {
-  const StationPage({Key? key, required this.code}) : super(key: key);
+  const StationPage({super.key, required this.code});
 
   final String code; // station code
   final double fontSize = 13;
@@ -147,7 +148,7 @@ class _StationPageState extends State<StationPage> {
         ..style.height = "100%"
         ..style.border = 'none';
 
-      final map = g_maps.GMap(elem, mapOptions);
+      final map = g_maps.GMap(elem as HTMLElement?, mapOptions);
 
       g_maps.Marker(g_maps.MarkerOptions()
         ..position = myLatLng
@@ -212,12 +213,8 @@ class _StationPageState extends State<StationPage> {
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: Consumer<LocationModel>(
                             builder: (context, locationModel, child) {
-                              LocationData? locationData = locationModel.locationData;
-                              double distanceInMeters = locationData == null
-                                  ?
-                              double.infinity
-                                  :
-                              Util.calculateDistanceInMeters(locationData.latitude, locationData.longitude, _station!.lat, _station!.lng);
+                              Coordinates coordinates = locationModel.coordinates;
+                              double distanceInMeters = Util.calculateDistanceInMeters(coordinates.latitude, coordinates.longitude, _station!.lat, _station!.lng);
                               return SizedBox(width: 64, child: DistanceView(distanceInMeters: distanceInMeters, fontSize: 20));
                             }
                         ),

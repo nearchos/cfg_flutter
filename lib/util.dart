@@ -1,8 +1,9 @@
 import 'package:cfg_flutter/view_mode.dart';
 import 'package:flutter/material.dart';
-import 'package:location/location.dart';
 import 'package:cfg_flutter/model/fuel_type.dart';
 import 'dart:math';
+
+import 'package:geolocator/geolocator.dart';
 
 class Util {
 
@@ -56,29 +57,44 @@ class Util {
     }
   }
 
-  static Future<Location> requestLocation() async {
-    Location location = Location();
-
+  /// Determine the current position of the device - ask permissions as needed
+  ///
+  /// When the location services are not enabled or permissions are denied the `Future` will return an error.
+  static Future<Position> _determinePosition() async {
     bool serviceEnabled;
-    PermissionStatus permissionGranted;
+    LocationPermission permission;
 
-    serviceEnabled = await location.serviceEnabled();
+    // Test if location services are enabled.
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      serviceEnabled = await location.requestService();
-      if (!serviceEnabled) {
-        throw Exception('Could not get location service');
+      // Location services are not enabled don't continue
+      // accessing the position and request users of the
+      // App to enable the location services.
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // Permissions are denied, next time you could try
+        // requesting permissions again (this is also where
+        // Android's shouldShowRequestPermissionRationale
+        // returned true. According to Android guidelines
+        // your App should show an explanatory UI now.
+        return Future.error('Location permissions are denied');
       }
     }
 
-    permissionGranted = await location.hasPermission();
-    if (permissionGranted != PermissionStatus.granted) {
-      permissionGranted = await location.requestPermission();
-      if (permissionGranted != PermissionStatus.granted) {
-        throw Exception('Could not get location permission');
-      }
+    if (permission == LocationPermission.deniedForever) {
+      // Permissions are denied forever, handle appropriately.
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
     }
 
-    return location;
+    // When we reach here, permissions are granted and we can
+    // continue accessing the position of the device.
+    return await Geolocator.getCurrentPosition();
   }
 
   static double calculateDistanceInMeters(lat1, lng1, lat2, lng2) {
@@ -105,30 +121,40 @@ class Util {
   }
 
   static String imageAssetForBrand(String brand) {
-    if ('AGIP' == brand) {
-      return 'images/agip.png';
-    } else if ('EKO' == brand) {
-      return 'images/eko.png';
-    } else if ('ENI' == brand) {
-      return 'images/eni.png';
-    } else if ('ESSO' == brand) {
-      return 'images/esso.png';
-    } else if ('FILL_N_GO' == brand || 'FILL-N-GO' == brand) {
-      return 'images/fill_n_go.png';
-    } else if ('LUKOIL' == brand) {
-      return 'images/lukoil.png';
-    } else if ('PETROLINA' == brand) {
-      return 'images/petrolina.png';
-    } else if ('SHELL' == brand) {
-      return 'images/shell.png';
-    } else if ('STAROIL' == brand) {
-      return 'images/staroil.png';
-    } else if ('TOTAL' == brand) {
-      return 'images/total.png';
-    } else if ('TOTAL_PLUS' == brand || 'TOTAL-PLUS' == brand) {
-      return 'images/total_plus.png';
-    } else {
-      return 'images/independent.png';
+    switch(brand) {
+      case 'AGIP':
+      case 'AG':
+        return 'images/agip.png';
+      case 'EKO':
+      case 'EK':
+        return 'images/eko.png';
+      case 'ENI':
+      case 'EN':
+        return 'images/eni.png';
+      case 'ESSO':
+      case 'ES':
+        return 'images/esso.png';
+      case 'FILL_N_GO':
+      case 'FG':
+        return 'images/fill_n_go.png';
+      case 'LUKOIL':
+      case 'LU':
+        return 'images/lukoil.png';
+      case 'PETROLINA':
+      case 'PE':
+        return 'images/petrolina.png';
+      case 'SHELL':
+      case 'SH':
+        return 'images/shell.png';
+      case 'STAROIL':
+      case 'ST':
+        return 'images/staroil.png';
+      case 'TOTAL':
+      case 'TOTAL_PLUS':
+      case 'TO':
+        return 'images/total_plus.png';
+      default:
+        return 'images/independent.png';
     }
   }
 

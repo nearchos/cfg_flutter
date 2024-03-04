@@ -1,16 +1,13 @@
-import 'package:cfg_flutter/keys.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
 
-// const baseUrl = 'unibackend.appspot.com';
-// const baseUrl = 'unibackend.appspot.com';
-const baseUrl = 'cyprusfuelguide.appspot.com';
+const baseUrl = 'unibackend.appspot.com';
+
+const flutterMagic = 'e9407a6b-d0fc-4aba-bc7d-4cf97c824765';
 
 Future<String> sync({int from = 0}) async {
 
-  // Uri uri = Uri.https(baseUrl, 'cfg/sync', {'key': flutterMagic, 'from': '$from'});
-  // Uri uri = Uri.https(baseUrl, 'cfg/cors/sync', {'key': flutterMagic, 'from': '$from'});
-  Uri uri = Uri.https(baseUrl, 'api/sync', {'key': flutterMagic, 'from': '$from'});
+  Uri uri = Uri.https(baseUrl, 'cfg/cors-sync', {'key': flutterMagic});
 
   final Response response = await http.get(uri);
 

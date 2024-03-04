@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:cfg_flutter/model/coordinates.dart';
 import 'package:cfg_flutter/model/range.dart';
 import 'package:cfg_flutter/widgets/distance_view.dart';
 import 'package:cfg_flutter/widgets/heart_shape.dart';
 import 'package:cfg_flutter/widgets/price_view.dart';
 import 'package:flutter/material.dart';
 import 'package:greek_tools/greek_tools.dart';
-import 'package:location/location.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -112,7 +112,7 @@ class _StationsPageState extends State<StationsPage> {
                 Container(height: 1, color: Colors.brown),
                 Expanded(child: Consumer<LocationModel>(
                     builder: (context, locationModel, child) {
-                      return _getStationsListView(locationModel.locationData);
+                      return _getStationsListView(locationModel.coordinates);
                     }
                 )),
               ],
@@ -122,15 +122,15 @@ class _StationsPageState extends State<StationsPage> {
     );
   }
 
-  ListView _getStationsListView(LocationData? locationData) {
+  ListView _getStationsListView(Coordinates coordinates) {
 
     final Map<String,Price> stationCodeToPrice = {};
     for(final Price price in _syncResponse!.prices) {
       stationCodeToPrice[price.stationCode] = price;
     }
     // filter stations
-    double lat = locationData == null ? 0 : locationData.latitude ?? 0;
-    double lng = locationData == null ? 0 : locationData.longitude ?? 0;
+    double lat = coordinates.latitude;
+    double lng = coordinates.longitude;
     final double rangeInMeters = widget.selectedRange.value * 1000;
     final List<Station> selectedStations = [];
     for(final Station station in _syncResponse!.stations) {
@@ -141,7 +141,7 @@ class _StationsPageState extends State<StationsPage> {
         if (_favorites.contains(station.code)) {
           selectedStations.add(station);
         }
-      } else if(widget.viewMode == ViewMode.bestValue && locationData != null) { // limit by distance < range
+      } else if(widget.viewMode == ViewMode.bestValue) { // limit by distance < range
         double distance = Util.calculateDistanceInMeters(lat, lng, station.lat, station.lng);
         if(distance <= rangeInMeters && !_showZeros && price != null && price.prices[_fuelType.index] > 0 && stationBrandIsSelected) {
           selectedStations.add(station);
@@ -154,9 +154,9 @@ class _StationsPageState extends State<StationsPage> {
     }
 
     // sort by price or distance
-    if(widget.viewMode == ViewMode.nearest && locationData != null) { // sort by distance
-      double lat = locationData.latitude!;
-      double lng = locationData.longitude!;
+    if(widget.viewMode == ViewMode.nearest) { // sort by distance
+      double lat = coordinates.latitude;
+      double lng = coordinates.longitude;
       selectedStations.sort((s1, s2) {
         double d1 = Util.calculateDistanceInMeters(lat, lng, s1.lat, s1.lng);
         double d2 = Util.calculateDistanceInMeters(lat, lng, s2.lat, s2.lng);
@@ -200,19 +200,15 @@ class _StationsPageState extends State<StationsPage> {
 
     return ListView.separated(
       itemCount: selectedStations.length,
-      itemBuilder: (context, index) => _getStationListTile(context, selectedStations[index], stationCodeToPrice[selectedStations[index].code]!, locationData),
+      itemBuilder: (context, index) => _getStationListTile(context, selectedStations[index], stationCodeToPrice[selectedStations[index].code]!, coordinates),
       separatorBuilder: (context, index) => const Divider(color: Colors.brown),
     );
   }
 
-  ListTile _getStationListTile(BuildContext buildContext, Station station, Price price, LocationData? locationData) {
+  ListTile _getStationListTile(BuildContext buildContext, Station station, Price price, Coordinates coordinates) {
     double d;
     double p = price.prices[_fuelType.index] / 1000;
-    if(locationData == null) {
-      d = double.infinity;
-    } else {
-      d = Util.calculateDistanceInMeters(locationData.latitude, locationData.longitude, station.lat, station.lng);
-    }
+    d = Util.calculateDistanceInMeters(coordinates.latitude, coordinates.longitude, station.lat, station.lng);
     return ListTile(
       leading: Checkbox(
         // shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

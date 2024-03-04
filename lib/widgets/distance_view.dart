@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:progress_indicators/progress_indicators.dart';
 
 class DistanceView extends StatelessWidget {
 
@@ -15,7 +14,7 @@ class DistanceView extends StatelessWidget {
 
     return distanceInMeters == double.infinity
         ?
-    JumpingDotsProgressIndicator(fontSize: fontSize)
+    const Text('..?') // todo
         :
     distanceInMeters > 99999 // > 99Km
         ?

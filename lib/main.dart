@@ -24,8 +24,7 @@ import 'package:cfg_flutter/widgets/syncing_progress_indicator.dart';
 import 'package:cfg_flutter/widgets/analytics_page.dart';
 import 'package:fluro/fluro.dart';
 import 'package:flutter/foundation.dart';
-import 'package:location/location.dart';
-import 'package:package_info_plus/package_info_plus.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cfg_flutter/model/sync_response.dart';
 import 'package:flutter/material.dart';
@@ -33,6 +32,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 
 import 'dart:io';
+import 'model/coordinates.dart';
 import 'networking.dart';
 
 void main() {
@@ -49,7 +49,7 @@ class CyprusFuelGuideApp extends StatelessWidget {
 
   static final router = FluroRouter();
 
-  CyprusFuelGuideApp({Key? key}) : super(key: key) {
+  CyprusFuelGuideApp({super.key}) {
     defineRoutes(router);
   }
 
@@ -99,7 +99,7 @@ class CyprusFuelGuideApp extends StatelessWidget {
 }
 
 class CyprusFuelGuideAppPage extends StatefulWidget {
-  const CyprusFuelGuideAppPage({Key? key, required this.title, this.viewMode = ViewMode.bestValue}) : super(key: key);
+  const CyprusFuelGuideAppPage({super.key, required this.title, this.viewMode = ViewMode.bestValue});
 
   final String title;
   final ViewMode viewMode;
@@ -261,9 +261,9 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
     _loadSelectedRangeFromPrefs();
   }
 
-  String _version = '...';
+  late String _version = '0.0.0'; // todo
 
-  StreamSubscription<LocationData>? _locationStreamSubscription;
+  late StreamSubscription<Position> _positionStream;
 
   @override
   void initState() {
@@ -303,20 +303,24 @@ class _CyprusFuelGuideAppPageState extends State<CyprusFuelGuideAppPage> {
       //     jsonDecode(favoriteStationCodesRawJson)) : Favorites.empty();
     });
 
-    PackageInfo.fromPlatform().then((PackageInfo packageInfo) => setState(() {
-      _version = 'Version ${packageInfo.version}-${packageInfo.buildNumber}';
-    }));
+    // PackageInfo.fromPlatform().then((PackageInfo packageInfo) => setState(() {
+    //   _version = 'Version ${packageInfo.version}-${packageInfo.buildNumber}';
+    // }));
 
-    Util.requestLocation().then((Location location) {
-      _locationStreamSubscription = location.onLocationChanged.listen((LocationData currentLocationData) {
-        Provider.of<LocationModel>(context, listen: false).update(currentLocationData);
-      });
+    const LocationSettings locationSettings = LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 100,
+    );
+
+    _positionStream = Geolocator.getPositionStream(locationSettings: locationSettings).listen((Position position) {
+      Coordinates currentCoordinates = Coordinates(position.latitude, position.longitude);
+      Provider.of<LocationModel>(context, listen: false).update(currentCoordinates);
     });
   }
 
   @override
   void deactivate() {
-    _locationStreamSubscription?.cancel();
+    _positionStream.cancel();
     super.deactivate();
   }
 

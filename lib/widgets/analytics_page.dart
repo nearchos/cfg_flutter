@@ -15,7 +15,7 @@ import 'info_tile.dart';
 
 class AnalyticsPage extends StatefulWidget {
 
-  const AnalyticsPage({Key? key, required this.title}) : super(key: key);
+  const AnalyticsPage({super.key, required this.title});
 
   final String title;
   final double fontSize = 13;

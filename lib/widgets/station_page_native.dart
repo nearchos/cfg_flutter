@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io' as io;
 
+import 'package:cfg_flutter/model/coordinates.dart';
 import 'package:cfg_flutter/model/fuel_type.dart';
 import 'package:cfg_flutter/model/sync_response.dart';
 import 'package:cfg_flutter/widgets/distance_view.dart';
@@ -8,10 +9,8 @@ import 'package:cfg_flutter/widgets/price_view.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:greek_tools/greek_tools.dart';
-import 'package:map_launcher/map_launcher.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:location/location.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as g_f_maps;
@@ -25,7 +24,7 @@ import '../util.dart';
 import 'bars_painter.dart';
 
 class StationPage extends StatefulWidget {
-  const StationPage({Key? key, required this.code}) : super(key: key);
+  const StationPage({super.key, required this.code});
 
   final String code; // station code
   final double fontSize = 13;
@@ -271,12 +270,8 @@ class _StationPageState extends State<StationPage> {
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: Consumer<LocationModel>(
                             builder: (context, locationModel, child) {
-                              LocationData? locationData = locationModel.locationData;
-                              double distanceInMeters = locationData == null
-                                  ?
-                              double.infinity
-                                  :
-                              Util.calculateDistanceInMeters(locationData.latitude, locationData.longitude, _station!.lat, _station!.lng);
+                              Coordinates coordinates = locationModel.coordinates;
+                              double distanceInMeters = Util.calculateDistanceInMeters(coordinates.latitude, coordinates.longitude, _station!.lat, _station!.lng);
                               return SizedBox(width: 64, child: DistanceView(distanceInMeters: distanceInMeters, fontSize: 20));
                             }
                         ),
@@ -359,11 +354,12 @@ class _StationPageState extends State<StationPage> {
   }
 
   _launchMapsUrl(String title, double lat, double lon) async {
-    final availableMaps = await MapLauncher.installedMaps;
-
-    await availableMaps.first.showMarker(
-        coords: Coords(lat, lon),
-        title: title
-    );
+    //todo
+    // final availableMaps = await MapLauncher.installedMaps;
+    //
+    // await availableMaps.first.showMarker(
+    //     coords: Coords(lat, lon),
+    //     title: title
+    // );
   }
 }

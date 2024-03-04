@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:cfg_flutter/model/coordinates.dart';
 import 'package:cfg_flutter/model/favorites.dart';
 import 'package:cfg_flutter/model/sync_response.dart';
 import 'package:cfg_flutter/widgets/fuel_type_statistics.dart';
 import 'package:cfg_flutter/widgets/no_favorites_card.dart';
-import 'package:cfg_flutter/widgets/unknown_location_card.dart';
 import 'package:flutter/material.dart';
-import 'package:location/location.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
@@ -62,12 +61,12 @@ class _OverviewState extends State<Overview> {
         :
     Consumer<LocationModel>(
         builder: (context, locationModel, child) {
-          return _getListView(widget.syncResponse!, _fuelType, locationModel.locationData);
+          return _getListView(widget.syncResponse!, _fuelType, locationModel.coordinates);
         }
     );
   }
 
-  Widget _getListView(SyncResponse syncResponse, FuelType fuelType, LocationData? locationData) {
+  Widget _getListView(SyncResponse syncResponse, FuelType fuelType, Coordinates coordinates) {
     FuelTypeStatistics fuelTypeStatistics = FuelTypeStatistics.from(syncResponse, fuelType);
     final int numOfStations = syncResponse.stations.length;
     final int minPrice = fuelTypeStatistics.minPrice;
@@ -81,18 +80,16 @@ class _OverviewState extends State<Overview> {
     Map<Station,double> stationsToDistance = {};
     double nearestStationDistance = double.maxFinite;
     int? nearestStationPrice = 0;
-    if(locationData != null) {
-      double lat = locationData.latitude!;
-      double lng = locationData.longitude!;
-      for (Station station in syncResponse.stations) {
-        double stationDistance = Util.calculateDistanceInMeters(lat, lng, station.lat, station.lng);
-        stationsToDistance[station] = stationDistance;
-        if(stationDistance < nearestStationDistance) {
-          nearestStationDistance = stationDistance;
-          nearestStationPrice = stationCodesToPrice[station.code];
-        }
+    // assert coordinates != null
+    for (Station station in syncResponse.stations) {
+      double stationDistance = Util.calculateDistanceInMeters(coordinates.latitude, coordinates.longitude, station.lat, station.lng);
+      stationsToDistance[station] = stationDistance;
+      if(stationDistance < nearestStationDistance) {
+        nearestStationDistance = stationDistance;
+        nearestStationPrice = stationCodesToPrice[station.code];
       }
     }
+
     // compute best price among favorites
     int bestPrice = fuelTypeStatistics.maxPrice;
     for (final Price price in syncResponse.prices) {
@@ -111,20 +108,12 @@ class _OverviewState extends State<Overview> {
     return ListView(
       children: [
         // best value card
-        locationData == null
-            ?
-        const UnknownLocationCard()
-            :
-        _getCard(const Icon(Icons.thumb_up_outlined, color: Colors.brown), 'Best value €${(bestValueMinPrice/1000).toStringAsFixed(3)} in $numOfBestValueStations stations', 'This is ${bestValueDiff/10}¢ cheaper than the average, available in stations within ${bestValueDistance} Kms', _navToStationsByPrice),
+        _getCard(const Icon(Icons.thumb_up_outlined, color: Colors.brown), 'Best value €${(bestValueMinPrice/1000).toStringAsFixed(3)} in $numOfBestValueStations stations', 'This is ${bestValueDiff/10}¢ cheaper than the average, available in stations within $bestValueDistance Kms', _navToStationsByPrice),
 
         // lowest price card
         _getCard(const Icon(Icons.euro_outlined, color: Colors.brown), 'Lowest price €${(minPrice/1000).toStringAsFixed(3)} in $numOfStations stations', 'This is ${diff/10}¢ cheaper than the average, available in $numOfBestPriceStations station${numOfBestPriceStations > 1 ? "s" : ""}', _navToStationsByPrice),
 
         // check location
-        locationData == null
-            ?
-        const UnknownLocationCard()
-            :
         _getCard(const Icon(Icons.near_me_outlined, color: Colors.brown), 'Nearest station ${Util.formatDistance(nearestStationDistance)} away', 'Prices from €${nearestStationPrice!/1000}', _navToStationsByDistance),
 
         // check favorites

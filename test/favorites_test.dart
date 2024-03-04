@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:cfg_flutter/model/favorites.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -11,17 +12,17 @@ void main() {
     Favorites favorites = Favorites(codes: []);
     expect(favorites.isEmpty(), true);
     expect(favorites.isNotEmpty(), false);
-    print("favorites: $favorites");
+    debugPrint("favorites: $favorites");
 
     favorites.add("LU037");
     expect(favorites.isEmpty(), false);
     expect(favorites.isNotEmpty(), true);
-    print("favorites: $favorites");
+    debugPrint("favorites: $favorites");
 
     favorites.add("LU036");
     final String json = jsonEncode(favorites.toMap());
     expect(rawJson==json, true);
-    print("json: $json");
+    debugPrint("json: $json");
 
     Favorites favoritesCopy = Favorites.fromJson(jsonDecode(json));
     expect(favoritesCopy.isEmpty(), false);
